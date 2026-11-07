@@ -1,0 +1,6 @@
+{
+  "name": "Primavera P6 XER Viewer & Schedule Analyzer",
+  "description": "Professional Oracle Primavera P6 XER file reader, interactive Gantt chart viewer, WBS explorer, DCMA 14-point schedule health audit, and resource inspector.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

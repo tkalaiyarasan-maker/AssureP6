@@ -1,0 +1,275 @@
+P6 PROGRAMME HEALTH CHECK – SINGLE INPUT SHEET (inputs · scoring · critical key · dashboard calculations),,,,,,,,,,,,,,,,,,,,,,,
+HOW IT WORKS  ?  Fill the blue-on-yellow cells only (sample project data is pre-filled – overwrite it).  ?  100 budgeted units are split Criteria A (P6 settings) 20 % + Criteria B (schedule quality & integrity) 80 %; inside each criteria the units are shared by weight – Critical Key = Yes carries double weight (factor editable in section 2).,,,,,,,,,,,,,,,,,,,,,,,
+"?  Each check is compared with its Target and Limit:  Pass = meets Target (100 % of units)  |  Warning = between Target and Limit (partial units, % set in section 2)  |  Fail = at / beyond Limit (0 units).  Criteria A: Compliant = Pass, Non-Compliant = Fail.",,,,,,,,,,,,,,,,,,,,,,,
+"?  RULE: every check with Critical Key = Yes must PASS. If any is Fail or Warning ? Action shows “RECHECK & RESUBMIT”, the Dashboard verdict is RESUBMIT REQUIRED and the health rating is capped at AT RISK (never HEALTHY / ACCEPTABLE).  ?  Update-only checks (missed tasks, BEI, actual dates, physical progress, actual units) are N/A for a Baseline and excluded from the score.",,,,,,,,,,,,,,,,,,,,,,,
+1. PROJECT DETAILS,,,,,,,,,,,,,,,,,,,,,,,
+,,Project name,MAHSR C4 - CWP Baseline,,,,,,,,,,,,,,,,,,,,
+,,Schedule type (Baseline / Update),Baseline,,,,,,,,,,,,,,,,,,,,
+,,Data date,10-Dec-2020,,,,,,,,,,,,,,,,,,,,
+,,Project planned start,10-Dec-2020,,,,,,,,,,,,,,,,,,,,
+,,Project planned finish,08-Dec-2024,,,,,,,,,,,,,,,,,,,,
+,,Must-finish-by date (blank if none),,,,,,,,,,,,,,,,,,,,,
+,,Contract start date,10-Dec-2020,,,,,,,,,,,,,,,,,,,,
+,,Contract completion date,08-Dec-2024,,,,,,,,,,,,,,,,,,,,
+,,Reviewer,Planning Engineer (P6),,,,,,,,,,,,,,,,,,,,
+,,Review date,14-Oct-2026,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+2. SCORING SETTINGS,,,,,,,,,,,,,,,,,,,,,,,
+,,Total budgeted units,100,,,,,,,,,,,,,,,,,,,,
+,,Criteria A – P6 settings & configuration (share),20%,,,,,,,,,,,,,,,,,,,,
+,,Criteria B – schedule quality & integrity (share),80%,,,,,,,,,,,,,,,,,,,,
+,,Units to Criteria A,20.0,,,,,,,,,,,,,,,,,,,,
+,,Units to Criteria B,80.0,,,,,,,,,,,,,,,,,,,,
+,,Weight factor – Critical Key = Yes,2.0,,,,,,,,,,,,,,,,,,,,
+,,Weight factor – Critical Key = No,1.0,,,,,,,,,,,,,,,,,,,,
+,,Critical Key = Yes rule,Must PASS – any non-Pass ? RECHECK & RESUBMIT,Compulsory: every Critical Key = Yes check must Pass. Otherwise the schedule is returned for recheck and the health rating is capped at AT RISK (never HEALTHY / ACCEPTABLE).,,,,,,,,,,,,,,,,,,,
+,,Warning earns this % of the item's units,50%,,,,,,,,,,,,,,,,,,,,
+,,Rating: HEALTHY if score ?,85%,,,,,,,,,,,,,,,,,,,,
+,,Rating: ACCEPTABLE if score ?,70%,,,,,,,,,,,,,,,,,,,,
+,,Rating: AT RISK if score ? (else CRITICAL),50%,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+3. SCHEDULE COUNTS FROM P6 / XER  (these also feed the Dashboard KPIs and the base counts of Criteria B),,,,,,,,,,,,,,,,,,,,,,,
+,,Total activities,"6,078",All activities in the XER,,,,,,,,,,,,,,,,,,,
+,,Completed activities,0,0 for a baseline,,,,,,,,,,,,,,,,,,,
+,,In-progress activities,0,0 for a baseline,,,,,,,,,,,,,,,,,,,
+,,Incomplete activities,"6,078",Linked: total less completed,,TRUE,,,,,,,,,,,,,,,,,
+,,Milestones (start + finish),346,,,,,,,,,,,,,,,,,,,,
+,,LOE + WBS-summary activities,0,,,,,,,,,,,,,,,,,,,,
+,,Incomplete task activities (base),"5,732","Linked: incomplete less milestones, LOE, summary",,,,,,,,,,,,,,,,,,,
+,,Total WBS nodes,"1,979",,,,,,,,,,,,,,,,,,,,
+,,Relationships – FS,"10,605",From the P6 Relationships table,,,,,,,,,,,,,,,,,,,
+,,Relationships – SS,"1,855",,,,,,,,,,,,,,,,,,,,
+,,Relationships – FF,633,,,,,,,,,,,,,,,,,,,,
+,,Relationships – SF,1,,,,,,,,,,,,,,,,,,,,
+,,Total relationships,"13,094",Linked: FS + SS + FF + SF,,TRUE,,,,,,,,,,,,,,,,,
+,,Total resources,431,Labor + Nonlabor + Material,,,,,,,,,,,,,,,,,,,
+,,Activities with negative float,0,Total float < 0,,,,,,,,,,,,,,,,,,,
+,,Activities on the critical path,"1,343",Longest path / critical activities,,,,,,,,,,,,,,,,,,,
+,,Critical path length (working days),"1,225",Used for CPLI,,,,,,,,,,,,,,,,,,,
+,,Project total float – minimum (days),0,Lowest TF on the longest path; negative = behind,,,,,,,,,,,,,,,,,,,
+,,Calendars in use,6,Distinct calendars assigned to activities,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+4. STATISTICAL DATA – feeds Dashboard_Stats and several Criteria B counts,,,,,,,,,,,,,,,,,,,,,,,
+,"6a. Activity original duration – range-wise (working days, all activities)",,,,,,,,,,,,,,,,,,,,,,
+,,Range,Count,% of total,Note,,,,,,,,,,,,,,,,,,
+,,0 d ,346,0.0%,,,,,,,,,,,,,,,,,,,
+,,1 d,0,0.0%,very short,,,,,,,,,,,,,,,,,,
+,,2 – 5 d,97,0.0%,,,,,,,,,,,,,,,,,,,
+,,6 – 10 d,143,0.0%,,,,,,,,,,,,,,,,,,,
+,,11 – 20 d,"1,191",0.0%,,,,,,,,,,,,,,,,,,,
+,,21 – 44 d,"1,238",0.0%,,,,,,,,,,,,,,,,,,,
+,,45 – 88 d,"2,321",0.0%,high duration (> 44 d),,,,,,,,,,,,,,,,,,
+,,89 + d,742,0.0%,high + very long (> 88 d),,,,,,,,,,,,,,,,,,
+,,Total activities,"6,078",,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,"6b. Lag duration – range-wise (days, all relationships)",,,,,,,,,,,,,,,,,,,,,
+,,Range,Count,% of total,Note,,,,,,,,,,,,,,,,,,
+,,? -11 d (lead),0,0.0%,negative lag,,,,,,,,,,,,,,,,,,
+,,-10 to -1 d (lead),0,0.0%,negative lag,,,,,,,,,,,,,,,,,,
+,,0 d (no lag),"10,707",0.0%,,,,,,,,,,,,,,,,,,,
+,,1 – 5 d,90,0.0%,positive lag,,,,,,,,,,,,,,,,,,
+,,6 – 10 d,42,0.0%,positive lag,,,,,,,,,,,,,,,,,,
+,,11 – 20 d,0,0.0%,positive lag,,,,,,,,,,,,,,,,,,
+,,> 20 d,"2,255",0.0%,positive lag,,,,,,,,,,,,,,,,,,
+,,Total relationships,"13,094",,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,"6c. Total float – range-wise (days, incomplete activities)",,,,,,,,,,,,,,,,,,,,,
+,,Range,Count,% of total,Note,,,,,,,,,,,,,,,,,,
+,,< 0 d (negative),0,0.0%,negative float,,,,,,,,,,,,,,,,,,
+,,0 d (critical),"1,343",0.0%,,,,,,,,,,,,,,,,,,,
+,,1 – 10 d,"1,225",0.0%,,,,,,,,,,,,,,,,,,,
+,,11 – 20 d,447,0.0%,,,,,,,,,,,,,,,,,,,
+,,21 – 44 d,662,0.0%,,,,,,,,,,,,,,,,,,,
+,,45 – 88 d,615,0.0%,high float (> 44 d),,,,,,,,,,,,,,,,,,
+,,> 88 d,"1,786",0.0%,high float (> 44 d),,,,,,,,,,,,,,,,,,
+,,Total incomplete activities,"6,078",,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,6d. Resources – type-wise numbers,,,,,,,,,,,,,,,,,,,,,,
+,,Resource type,No. of resources,No. of assignments,Note,,,,,,,,,,,,,,,,,,
+,,Labor,163,"10,169",,,,,,,,,,,,,,,,,,,
+,,Nonlabor,29,779,,,,,,,,,,,,,,,,,,,
+,,Material,239,"13,241",,,,,,,,,,,,,,,,,,,
+,,Total,431,"24,189",,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,7,Calendar Assignment,,,,,,,,,,,,,,,,,,,,,
+,,Calendar type,No. of Calendars,No. of assignments,Note,,,,,,,,,,,,,,,,,,
+,,Global,6,"6,078",,,,,,,,,,,,,,,,,,,
+,,Project,0,0,,,,,,,,,,,,,,,,,,,
+,,Resource,0,0,,,,,,,,,,,,,,,,,,,
+,,Total,6,"6,078",,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+"4. SCORING TABLE – Criteria A (P6 settings & configuration, 20 %) and Criteria B (schedule quality & integrity, 80 %)",,,,,,,,,,,,,,,,,,,,,Yellow headers = you fill · grey headers = automatic,,
+ID,Cat.,Theme,Parameter,CRITICAL KEY (Yes / No),Weight factor,Budget units,Actual setting  /  Issue count (A),Expected setting  /  Base count (B),Result,Better when,Target (pass),Limit (fail at / beyond),Status,Score %,Units earned,Units lost,Action,Result text,Pass rule,Rank key (recheck),Where to check in P6 / what to count,Limit at fail,Rank key (all)
+A01,A,A: P6 Settings,Default Data date = Project comencement Date,Yes,2.0,1.82,10-Dec-2020,Baseline: = start; Update: start < DD ? finish,Compliant,–,–,–,Pass,100%,1.82,0.00,OK,10-Dec-2020,Baseline: = start; Update: start < DD ? finish,0.0000000,Project Details > Dates. Baseline data date must equal planned start.,Mismatch,0.0000897
+A02,A,A: P6 Settings,Project start date,Yes,2.0,1.82,10-Dec-2020,Equals contract start date,Compliant,–,–,–,Pass,100%,1.82,0.00,OK,10-Dec-2020,Equals contract start date,0.0000000,Project Details > Dates > Planned Start. Must agree with contract commencement.,Mismatch,0.0000896
+A03,A,A: P6 Settings,Project finish date,Yes,2.0,1.82,08-Dec-2024,? Contract completion,Compliant,–,–,–,Pass,100%,1.82,0.00,OK,08-Dec-2024,? Contract completion,0.0000000,Project Details > Dates > Planned Finish. Must agree with contract completion,Mismatch,0.0000895
+A04,A,A: P6 Settings,Retained logic vs progress override,No,1.0,0.91,Retained Logic,Retained Logic,Compliant,–,–,–,Pass,100%,0.91,0.00,OK,Retained Logic,Retained Logic,0.0000000,Scheduling option > scheduling progress logic,Mismatch,0.0000894
+A05,A,A: P6 Settings,Define - Critical activity path as,Yes,2.0,1.82,Total Float,Total Float,Compliant,–,–,–,Pass,100%,1.82,0.00,OK,Total Float,Total Float,0.0000000,Schedule Options > General > Define critical activities as.,Mismatch,0.0000893
+A06,A,A: P6 Settings,Make open-ended activities critical,Yes,2.0,1.82,Unchecked,Unchecked,Compliant,–,–,–,Pass,100%,1.82,0.00,OK,Unchecked,Unchecked,0.0000000,Schedule Options > Advanced. Should be unchecked so open ends do not hide float.,Mismatch,0.0000892
+A07,A,A: P6 Settings,Total Float calculation basis,No,1.0,0.91,Finish Float,Finish Float,Compliant,–,–,–,Pass,100%,0.91,0.00,OK,Finish Float,Finish Float,0.0000000,Schedule Options > Advanced > Compute total float as. Align with specification.,Mismatch,0.0000891
+A08,A,A: P6 Settings,Calculate Multiple float paths,No,1.0,0.91,No,No,Compliant,–,–,–,Pass,100%,0.91,0.00,OK,No,No,0.0000000,Schedule Options > Advanced > Calculate multiple float paths. Enable only if the contract needs it.,Mismatch,0.0000890
+A09,A,A: P6 Settings,Project Default - Activity type,No,1.0,0.91,Task Dependent,Task Dependent,Compliant,–,–,–,Pass,100%,0.91,0.00,OK,Task Dependent,Task Dependent,0.0000000,Project Defaults ,Mismatch,0.0000889
+A10,A,A: P6 Settings,Project Default - Duration type,No,1.0,0.91,Fixed Duration & Units,Fixed Duration & Units,Compliant,–,–,–,Pass,100%,0.91,0.00,OK,Fixed Duration & Units,Fixed Duration & Units,0.0000000,Project Defaults,Mismatch,0.0000888
+A11,A,A: P6 Settings,Project Default - % complete type,No,1.0,0.91,Physical,Physical,Compliant,–,–,–,Pass,100%,0.91,0.00,OK,Physical,Physical,0.0000000,Project Defaults,Mismatch,0.0000887
+A12,A,A: P6 Settings,Number of projects in XER,No,1.0,0.91,1,1,Compliant,–,–,–,Pass,100%,0.91,0.00,OK,1,1,0.0000000,Count of projects in the XER,Mismatch,0.0000886
+A13,A,A: P6 Settings,Schedule recalculation (F9)- Identification of change in dates,Yes,2.0,1.82,0,0,Compliant,–,–,–,Pass,100%,1.82,0.00,OK,0,0,0.0000000,Press F9 and count activities whose dates change (expected 0).,Mismatch,0.0000885
+A14,A,A: P6 Settings,Project Default -  Project Calendar,No,1.0,0.91,Yes,Yes,Compliant,–,–,–,Pass,100%,0.91,0.00,OK,Yes,Yes,0.0000000,Project Defaults,Mismatch,0.0000884
+A15,A,A: P6 Settings,Calendar for schedulin lag Calendar,Yes,2.0,1.82,Predecessor Activity calendar,Predecessor Activity calendar,Compliant,–,–,–,Pass,100%,1.82,0.00,OK,Predecessor Activity calendar,Predecessor Activity calendar,0.0000000,Project > Assign Baselines: baseline assigned and primary baseline set.,Mismatch,0.0000883
+B01,B,Logic,Missing logic - Incomplete activities with no predecessor or no successor,Yes,2.0,3.08,2,"6,078",0.0%,Lower,5.0%,5.0%,Pass,100%,3.08,0.00,OK,0.0%,? 5.0%,0.0000000,Incomplete activities with no predecessor or no successor (excl. project start/finish). Layout: Predecessors / Successors = 0.,? 5.0%,0.0000882
+B02,B,Logic,Relationship with Negative Lags (Leads),Yes,2.0,3.08,0,"13,094",0.0%,Lower,0.0%,0.0%,Pass,100%,3.08,0.00,OK,0.0%,? 0.0%,0.0000000,Relationships with negative lag ÷ total relationships. Target 0.,? 0.0%,0.0000881
+B03,B,Logic,Relationship with Positive Lags ,No,1.0,1.54,"2,387","13,094",18.2%,Lower,5.0%,10.0%,Fail,0%,0.00,1.54,Review & improve,18.2%,? 5.0%,0.0000000,Relationships with positive lag ÷ total relationships (DCMA ? 5 %).,? 10.0%,1.5385495
+B04,B,Logic,Nos' of Relationship types having FS share,No,1.0,1.54,"10,605","13,094",81.0%,Higher,90.0%,70.0%,Warning,50%,0.77,0.77,Review & improve,81.0%,? 90.0%,0.0000000,Finish-to-Start relationships ÷ total relationships (best practice ? 90 %).,? 70.0%,0.7693187
+B05,B,Dates & Constraints,Activities having Hard constraints,Yes,2.0,3.08,0,"6,078",0.0%,Lower,5.0%,10.0%,Pass,100%,3.08,0.00,OK,0.0%,? 5.0%,0.0000000,Incomplete activities with Mandatory Start/Finish or Start/Finish On-or-Before constraints.,? 10.0%,0.0000878
+B06,B,Float & Duration,High Total float (> 44 days),No,1.0,1.54,"2,401","6,078",39.5%,Lower,5.0%,10.0%,Fail,0%,0.00,1.54,Review & improve,39.5%,? 5.0%,0.0000000,Incomplete activities with total float > 44 working days.,? 10.0%,1.5385492
+B07,B,Float & Duration,Negative Total float,Yes,2.0,3.08,0,"6,078",0.0%,Lower,0.0%,5.0%,Pass,100%,3.08,0.00,OK,0.0%,? 0.0%,0.0000000,Incomplete activities with total float < 0 (linked to section 3).,? 5.0%,0.0000876
+B08,B,Float & Duration,High duration (> 44 days),No,1.0,1.54,"3,063","6,078",50.4%,Lower,5.0%,10.0%,Fail,0%,0.00,1.54,Review & improve,50.4%,? 5.0%,0.0000000,Incomplete task activities with original duration > 44 working days.,? 10.0%,1.5385490
+B09,B,Dates & Constraints,Invalid dates identification,Yes,2.0,3.08,0,"6,078",0.0%,Lower,0.0%,0.0%,Pass,100%,3.08,0.00,OK,0.0%,? 0.0%,0.0000000,"Actual dates after data date, or forecast dates before data date on incomplete activities.",? 0.0%,0.0000874
+B10,B,Resources,No. of Activities assigned Resources,No,1.0,1.54,186,"5,732",3.2%,Lower,5.0%,25.0%,Pass,100%,1.54,0.00,OK,3.2%,? 5.0%,0.0000000,Incomplete task activities with no resource / cost assigned.,? 25.0%,0.0000873
+B11,B,Progress,Missed tasks (updates only),Yes,2.0,3.08,0,0,0.0%,Lower,5.0%,15.0%,Pass,100%,3.08,0.00,OK,0.0%,? 5.0%,0.0000000,UPDATE ONLY. Tasks finished / due after baseline finish ÷ tasks baseline-planned to finish by data date.,? 15.0%,0.0000872
+B12,B,Critical Path,Critical path test ,Yes,2.0,3.08,600,600,1.00,Higher,1.00,0.50,Pass,100%,3.08,0.00,OK,1.00,? 1.00,0.0000000,A = days the project finish moved after adding B days (e.g. 600) to a critical activity. Ratio ? 1.0 = valid path.,? 0.50,0.0000871
+B13,B,Critical Path,Critical Path Length Index (CPLI),Yes,2.0,3.08,1.000,n/a,1.00,Higher,1.00,0.95,Pass,100%,3.08,0.00,OK,1.000,? 1.000,0.0000000,(Critical path length + total float) ÷ critical path length – linked to section 3. Below 0.95 = failing.,? 0.950,0.0000870
+B14,B,Progress,"Baseline Execution Index (BEI, updates only)",Yes,2.0,3.08,1,1,1.00,Higher,0.95,0.85,Pass,100%,3.08,0.00,OK,1.00,? 0.95,0.0000000,"UPDATE ONLY. A = tasks actually completed, B = tasks baseline-planned to be complete by data date.",? 0.85,0.0000869
+B15,B,Logic,Incomplete activities with open start or open finish other than project start / finish.,Yes,2.0,3.08,2,"6,078",0.0%,Lower,0.03%,3.0%,Pass,100%,3.08,0.00,OK,0.0%,? 0.0%,0.0000000,Incomplete activities with open start or open finish other than project start / finish.,? 3.0%,0.0000868
+B16,B,Dates & Constraints,Inconsistency in Actual dates,No,1.0,1.54,0,"6,078",0.0%,Lower,0.0%,0.0%,Pass,100%,1.54,0.00,OK,0.0%,? 0.0%,0.0000000,"BASELINE- No presence of Actual start and finish date
+UPDATE -Started / finished activities with missing, future or inconsistent actual dates.",? 0.0%,0.0000867
+B17,B,Progress,Inconsistency in Physical progress,No,1.0,1.54,0,"6,078",0.0%,Lower,0.0%,0.0%,Pass,100%,1.54,0.00,OK,0.0%,? 0.0%,0.0000000,"BASELINE- Zero physical progress
+UPDATE ONLY. Activities on Physical % complete whose progress is not supported by measured quantities.",? 0.0%,0.0000866
+B18,B,Float & Duration,Inconsistency in Remaining Duration,No,1.0,1.54,0,"5,732",0.0%,Lower,0.0%,0.0%,Pass,100%,1.54,0.00,OK,0.0%,? 0.0%,0.0000000,"BASELINE- Zero Actual Duration 
+UPDATE - Task activities with zero / fractional / unrealistic original duration.",? 0.0%,0.0000865
+B19,B,Resources,Resource assignment – actual units,No,1.0,1.54,0,"24,189",0.0%,Lower,0.0%,0.0%,Pass,100%,1.54,0.00,OK,0.0%,? 0.0%,0.0000000,BASELINE - Resourced activities with no actual units recorded.,? 0.0%,0.0000864
+B20,B,Logic,Logic density,No,1.0,1.54,"13,094","6,078",2.15,Higher,2.00,1.00,Pass,100%,1.54,0.00,OK,2.15,? 2.00,0.0000000,"Relationships per activity (A = relationships, B = activities). 2.0 or more preferred.",? 1.00,0.0000863
+B21,B,Logic,Redundant relationships,No,1.0,1.54,,"13,094",,Lower,2.0%,5.0%,Pending,0%,0.00,1.54,Enter data,–,? 2.0%,0.0000000,Relationships having duplicate or  already implied by other paths (e.g. A?B?C and A?C) ÷ total relationships.,? 5.0%,1.5385477
+B22,B,Logic,Circular logic / loops,Yes,2.0,3.08,0,n/a,0.00,Lower,0.00,0.00,Pass,100%,3.08,0.00,OK,0,? 0,0.0000000,Number of logic loops (schedule log / Check Project). Any loop = Fail.,? 0,0.0000861
+B23,B,Critical Path,Critical path continuity,Yes,2.0,3.08,0,n/a,0.00,Lower,0.00,0.00,Pass,100%,3.08,0.00,OK,0,? 0,0.0000000,Number of breaks in the longest path from project start to finish. Any break = Fail.,? 0,0.0000860
+B24,B,Logic,Relationship types – SF,No,1.0,1.54,1,"13,094",0.0%,Lower,0.0%,1.0%,Warning,50%,0.77,0.77,Review & improve,0.0%,? 0.0%,0.0000000,Start-to-Finish relationships ÷ total relationships – avoid.,? 1.0%,0.7693167
+B25,B,Logic,Closure of loops having SS relationship,No,1.0,1.54,633,"1,855",34.1%,Higher,80.0%,75.0%,Fail,0%,0.00,1.54,Review & improve,34.1%,? 80.0%,0.0000000,SS relationships without a closing FF / FS tie ÷ total SS relationships.,? 75.0%,1.5385473
+B26,B,Calendars,Default Project Calendar assignment,No,1.0,1.54,0,"6,078",0.0%,Lower,100.0%,95.0%,Fail,0%,0.00,1.54,Review & improve,0.0%,? 100.0%,0.0000000,Project calender assigned/ total nos activities= 100%,? 95.0%,1.5385472
+B27,B,Calendars,Calendars complexity,No,1.0,1.54,6,n/a,6.00,Lower,6.00,8.00,Pass,100%,1.54,0.00,OK,6,? 6,0.0000000,"Number of distinct calendars in use (? 6 pass, ? 12 fail).",? 8,0.0000856
+B28,B,Logic,Lags – permissible on project specifics,No,1.0,1.54,261,"2,387",10.9%,Lower,5.0%,25.0%,Warning,50%,0.77,0.77,Review & improve,10.9%,? 5.0%,0.0000000,Positive lags not justified by contract / spec ÷ total positive lags (linked to the Lags row).,? 25.0%,0.7693163
+B29,B,WBS & Coding,Difference in WBS and Activity Duration,No,1.0,1.54,,"1,979",,Lower,5.0%,5.0%,Pending,0%,0.00,1.54,Enter data,–,? 5.0%,0.0000000,Total WBS having duration more than 50% to its activities / total WBS count,? 5.0%,1.5385469
+B30,B,Resources,No's of Resource Over allocated,No,1.0,1.54,,"24,189",,Lower,5.0%,25.0%,Pending,0%,0.00,1.54,Enter data,–,? 5.0%,0.0000000,Resources over-allocated in any period (Resource Usage Profile).,? 25.0%,1.5385468
+B31,B,Dates & Constraints,Total Nos of Constraints,Yes,2.0,3.08,55,"6,078",0.9%,Lower,5.0%,20.0%,Pass,100%,3.08,0.00,OK,0.9%,? 5.0%,0.0000000,Incomplete activities with any date constraint (soft + hard).,? 20.0%,0.0000852
+B32,B,WBS & Coding,LOE / summary activities,No,1.0,1.54,0,0,0.0%,Lower,0.0%,0.0%,Pass,100%,1.54,0.00,OK,0.0%,? 0.0%,0.0000000,LOE / WBS-summary activities that drive logic or sit on the critical path ÷ all activities.,? 0.0%,0.0000851
+B33,B,WBS & Coding,Activities at Project - WBS root,No,1.0,1.54,0,"6,078",0.0%,Lower,0.0%,0.0%,Pass,100%,1.54,0.00,OK,0.0%,? 0.0%,0.0000000,Activities assigned directly to the project root WBS node.,? 0.0%,0.0000850
+B34,B,WBS & Coding,Empty WBS nodes,No,1.0,1.54,0,"1,979",0.0%,Lower,0.0%,0.0%,Pass,100%,1.54,0.00,OK,0.0%,? 0.0%,0.0000000,Leaf WBS nodes with no activities ÷ total WBS nodes.,? 0.0%,0.0000849
+B35,B,WBS & Coding,Identification of Default or inconsistent Activity ID ,No,1.0,1.54,0,"6,078",0.0%,Lower,0.0%,0.0%,Pass,100%,1.54,0.00,OK,0.0%,? 0.0%,0.0000000,Activity IDs not following the agreed coding structure.,? 0.0%,0.0000848
+B36,B,WBS & Coding,Duplicate activity names,No,1.0,1.54,673,"6,078",11.1%,Lower,5.0%,10.0%,Fail,0%,0.00,1.54,Review & improve,11.1%,? 5.0%,0.0000000,Activities sharing an identical name within the same WBS.,? 10.0%,1.5385462
+B37,B,WBS & Coding,Duplicate WBS Names,No,1.0,1.54,,"6,078",,Lower,0.0%,5.0%,Pending,0%,0.00,1.54,Enter data,–,? 0.0%,0.0000000,Inconsistency in WBS completion duration with Activity Duration/ Total WBS,? 5.0%,1.5385461
+B38,B,Float & Duration,Very short activities-1 Day,No,1.0,1.54,0,"6,078",0.0%,Lower,5.0%,15.0%,Pass,100%,1.54,0.00,OK,0.0%,? 5.0%,0.0000000,Incomplete non-milestone activities with duration of 1 day or less.,? 15.0%,0.0000845
+B39,B,Float & Duration,Very long activities- More than 88 Days,No,1.0,1.54,742,"6,078",12.2%,Lower,2.0%,10.0%,Fail,0%,0.00,1.54,Review & improve,12.2%,? 2.0%,0.0000000,Incomplete activities with duration > 88 working days (2 × 44).,? 10.0%,1.5385459
+,,,TOTAL,,,100.00,,,,,,,,,80.77,19.23,,,,,,,
+,,,Check: total units = budget,,,OK,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+5. DASHBOARD CALCULATIONS  (automatic – do not edit; the Dashboard reads these cells),,,,,,,,,,,,,,,,,,,,,,,
+,,Criteria A – units allotted,,20.00,,,,,,,,,,,,,,,,,,,
+,,Criteria A – applicable units,,20.00,,,,,,,,,,,,,,,,,,,
+,,Criteria A – units earned,,20.00,,,,,,,,,,,,,,,,,,,
+,,Criteria B – units allotted,,80.00,,,,,,,,,,,,,,,,,,,
+,,Criteria B – applicable units,,80.00,,,,,,,,,,,,,,,,,,,
+,,Criteria B – units earned,,60.77,,,,,,,,,,,,,,,,,,,
+,,Total applicable units,,100.00,,,,,,,,,,,,,,,,,,,
+,,Total units earned,,80.77,,,,,,,,,,,,,,,,,,,
+,,OVERALL HEALTH SCORE (earned ÷ applicable),,80.8%,,,,,,,,,,,,,,,,,,,
+,,Criteria A score,,100.0%,,,,,,,,,,,,,,,,,,,
+,,Criteria B score,,76.0%,,,,,,,,,,,,,,,,,,,
+,,Score band (before critical gate),,ACCEPTABLE,,,,,,,,,,,,,,,,,,,
+,,Critical-key items NOT Pass (critical gate),,0,,,,,,,,,,,,,,,,,,,
+,,HEALTH RATING (after critical gate),,ACCEPTABLE,,,,,,,,,,,,,,,,,,,
+,,Units not applicable (update-only on a Baseline),,0.00,,,,,,,,,,,,,,,,,,,
+,,Status count – Pass,,40,,,,,,,,,,,,,,,,,,,
+,,Status count – Warning,,3,,,,,,,,,,,,,,,,,,,
+,,Status count – Fail,,7,,,,,,,,,,,,,,,,,,,
+,,Status count – Pending,,4,,,,,,,,,,,,,,,,,,,
+,,Status count – N/A,,0,,,,,,,,,,,,,,,,,,,
+,,Critical-key items (Yes) applicable,,20,,,,,,,,,,,,,,,,,,,
+,,Critical-key items – Pass,,20,,,,,,,,,,,,,,,,,,,
+,,Critical-key items – RECHECK & RESUBMIT,,0,,,,,,,,,,,,,,,,,,,
+,,Critical-key items – other (comment / pending),,0,,,,,,,,,,,,,,,,,,,
+,,SUBMISSION VERDICT,,ACCEPTED WITH COMMENTS – no critical-key item to resubmit,,,,,,,,,,,,,,,,,,,
+,,Gauge – score,,80.8%,,,,,,,,,,,,,,,,,,,
+,,Gauge – remainder,,19.2%,,,,,,,,,,,,,,,,,,,
+,,Gauge – hidden half,,100%,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,Critical-key donut data,Result,,,,,,,,,,,,,,,,,,,,
+,,Critical – Pass,20,,,,,,,,,,,,,,,,,,,,
+,,Critical – RECHECK & RESUBMIT,0,,,,,,,,,,,,,,,,,,,,
+,,Critical – other,0,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,Status donut data,Result,,,,,,,,,,,,,,,,,,,,
+,,Pass,40,,,,,,,,,,,,,,,,,,,,
+,,Warning,3,,,,,,,,,,,,,,,,,,,,
+,,Fail,7,,,,,,,,,,,,,,,,,,,,
+,,Pending,4,,,,,,,,,,,,,,,,,,,,
+,,N/A,0,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,Theme summary,,,,,,,,,,,,,,,,,,,,,
+,,Theme,,Units allotted,Applicable,Earned,Lost,Chart Score,Chart Target,,,,,,,,,,,,,,
+,,A: P6 Settings,,20.00,20.00,20.00,0.00,100%,85%,,,,,,,,,,,,,,
+,,Logic,,23.08,23.08,16.15,6.92,70%,85%,,,,,,,,,,,,,,
+,,Dates & Constraints,,10.77,10.77,10.77,0.00,100%,85%,,,,,,,,,,,,,,
+,,Float & Duration,,10.77,10.77,6.15,4.62,57%,85%,,,,,,,,,,,,,,
+,,Critical Path,,9.23,9.23,9.23,0.00,100%,85%,,,,,,,,,,,,,,
+,,Progress,,7.69,7.69,7.69,0.00,100%,85%,,,,,,,,,,,,,,
+,,Resources,,4.62,4.62,3.08,1.54,67%,85%,,,,,,,,,,,,,,
+,,Calendars,,3.08,3.08,1.54,1.54,50%,85%,,,,,,,,,,,,,,
+,,WBS & Coding,,10.77,10.77,6.15,4.62,57%,85%,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,"Rank list – all items, largest units lost first (feeds the Dashboard table)",,,,,,,,,,,,,,,,,,,,,
+#,,ID,Parameter,Status,Theme,,,,Rank key,Row idx,,,,,,,,,,,,,
+1,,B03,Relationship with Positive Lags ,Fail,Logic,,,,1.5385495,18,,,,,,,,,,,,,
+2,,B06,High Total float (> 44 days),Fail,Float & Duration,,,,1.5385492,21,,,,,,,,,,,,,
+3,,B08,High duration (> 44 days),Fail,Float & Duration,,,,1.5385490,23,,,,,,,,,,,,,
+4,,B21,Redundant relationships,Pending,Logic,,,,1.5385477,36,,,,,,,,,,,,,
+5,,B25,Closure of loops having SS relationship,Fail,Logic,,,,1.5385473,40,,,,,,,,,,,,,
+6,,B26,Default Project Calendar assignment,Fail,Calendars,,,,1.5385472,41,,,,,,,,,,,,,
+7,,B29,Difference in WBS and Activity Duration,Pending,WBS & Coding,,,,1.5385469,44,,,,,,,,,,,,,
+8,,B30,No's of Resource Over allocated,Pending,Resources,,,,1.5385468,45,,,,,,,,,,,,,
+9,,B36,Duplicate activity names,Fail,WBS & Coding,,,,1.5385462,51,,,,,,,,,,,,,
+10,,B37,Duplicate WBS Names,Pending,WBS & Coding,,,,1.5385461,52,,,,,,,,,,,,,
+11,,B39,Very long activities- More than 88 Days,Fail,Float & Duration,,,,1.5385459,54,,,,,,,,,,,,,
+12,,B04,Nos' of Relationship types having FS share,Warning,Logic,,,,0.7693187,19,,,,,,,,,,,,,
+13,,B24,Relationship types – SF,Warning,Logic,,,,0.7693167,39,,,,,,,,,,,,,
+14,,B28,Lags – permissible on project specifics,Warning,Logic,,,,0.7693163,43,,,,,,,,,,,,,
+15,,A01,Default Data date = Project comencement Date,Pass,A: P6 Settings,,,,0.0000897,1,,,,,,,,,,,,,
+16,,A02,Project start date,Pass,A: P6 Settings,,,,0.0000896,2,,,,,,,,,,,,,
+17,,A03,Project finish date,Pass,A: P6 Settings,,,,0.0000895,3,,,,,,,,,,,,,
+18,,A04,Retained logic vs progress override,Pass,A: P6 Settings,,,,0.0000894,4,,,,,,,,,,,,,
+19,,A05,Define - Critical activity path as,Pass,A: P6 Settings,,,,0.0000893,5,,,,,,,,,,,,,
+20,,A06,Make open-ended activities critical,Pass,A: P6 Settings,,,,0.0000892,6,,,,,,,,,,,,,
+21,,A07,Total Float calculation basis,Pass,A: P6 Settings,,,,0.0000891,7,,,,,,,,,,,,,
+22,,A08,Calculate Multiple float paths,Pass,A: P6 Settings,,,,0.0000890,8,,,,,,,,,,,,,
+23,,A09,Project Default - Activity type,Pass,A: P6 Settings,,,,0.0000889,9,,,,,,,,,,,,,
+24,,A10,Project Default - Duration type,Pass,A: P6 Settings,,,,0.0000888,10,,,,,,,,,,,,,
+25,,A11,Project Default - % complete type,Pass,A: P6 Settings,,,,0.0000887,11,,,,,,,,,,,,,
+26,,A12,Number of projects in XER,Pass,A: P6 Settings,,,,0.0000886,12,,,,,,,,,,,,,
+27,,A13,Schedule recalculation (F9)- Identification of change in dates,Pass,A: P6 Settings,,,,0.0000885,13,,,,,,,,,,,,,
+28,,A14,Project Default -  Project Calendar,Pass,A: P6 Settings,,,,0.0000884,14,,,,,,,,,,,,,
+29,,A15,Calendar for schedulin lag Calendar,Pass,A: P6 Settings,,,,0.0000883,15,,,,,,,,,,,,,
+30,,B01,Missing logic - Incomplete activities with no predecessor or no successor,Pass,Logic,,,,0.0000882,16,,,,,,,,,,,,,
+31,,B02,Relationship with Negative Lags (Leads),Pass,Logic,,,,0.0000881,17,,,,,,,,,,,,,
+32,,B05,Activities having Hard constraints,Pass,Dates & Constraints,,,,0.0000878,20,,,,,,,,,,,,,
+33,,B07,Negative Total float,Pass,Float & Duration,,,,0.0000876,22,,,,,,,,,,,,,
+34,,B09,Invalid dates identification,Pass,Dates & Constraints,,,,0.0000874,24,,,,,,,,,,,,,
+35,,B10,No. of Activities assigned Resources,Pass,Resources,,,,0.0000873,25,,,,,,,,,,,,,
+36,,B11,Missed tasks (updates only),Pass,Progress,,,,0.0000872,26,,,,,,,,,,,,,
+37,,B12,Critical path test ,Pass,Critical Path,,,,0.0000871,27,,,,,,,,,,,,,
+38,,B13,Critical Path Length Index (CPLI),Pass,Critical Path,,,,0.0000870,28,,,,,,,,,,,,,
+39,,B14,"Baseline Execution Index (BEI, updates only)",Pass,Progress,,,,0.0000869,29,,,,,,,,,,,,,
+40,,B15,Incomplete activities with open start or open finish other than project start / finish.,Pass,Logic,,,,0.0000868,30,,,,,,,,,,,,,
+41,,B16,Inconsistency in Actual dates,Pass,Dates & Constraints,,,,0.0000867,31,,,,,,,,,,,,,
+42,,B17,Inconsistency in Physical progress,Pass,Progress,,,,0.0000866,32,,,,,,,,,,,,,
+43,,B18,Inconsistency in Remaining Duration,Pass,Float & Duration,,,,0.0000865,33,,,,,,,,,,,,,
+44,,B19,Resource assignment – actual units,Pass,Resources,,,,0.0000864,34,,,,,,,,,,,,,
+45,,B20,Logic density,Pass,Logic,,,,0.0000863,35,,,,,,,,,,,,,
+46,,B22,Circular logic / loops,Pass,Logic,,,,0.0000861,37,,,,,,,,,,,,,
+47,,B23,Critical path continuity,Pass,Critical Path,,,,0.0000860,38,,,,,,,,,,,,,
+48,,B27,Calendars complexity,Pass,Calendars,,,,0.0000856,42,,,,,,,,,,,,,
+49,,B31,Total Nos of Constraints,Pass,Dates & Constraints,,,,0.0000852,46,,,,,,,,,,,,,
+50,,B32,LOE / summary activities,Pass,WBS & Coding,,,,0.0000851,47,,,,,,,,,,,,,
+51,,B33,Activities at Project - WBS root,Pass,WBS & Coding,,,,0.0000850,48,,,,,,,,,,,,,
+52,,B34,Empty WBS nodes,Pass,WBS & Coding,,,,0.0000849,49,,,,,,,,,,,,,
+53,,B35,Identification of Default or inconsistent Activity ID ,Pass,WBS & Coding,,,,0.0000848,50,,,,,,,,,,,,,
+54,,B38,Very short activities-1 Day,Pass,Float & Duration,,,,0.0000845,53,,,,,,,,,,,,,
