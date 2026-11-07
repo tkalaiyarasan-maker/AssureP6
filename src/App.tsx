@@ -21,6 +21,33 @@ import { ActivityDetailModal } from './components/ActivityDetailModal';
 import { UploadModal } from './components/UploadModal';
 
 export default function App() {
+  // Theme state: defaults to 'light' as requested by the user
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('p6_app_theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+    }
+    return 'light';
+  });
+
+  // Apply dark class to documentElement whenever theme is dark
+  React.useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    try {
+      localStorage.setItem('p6_app_theme', theme);
+    } catch {
+      // ignore local storage errors
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   // Parse initial default project: MAHSR C4 - CWP Baseline (the reference project from the user's framework)
   const [project, setProject] = useState<ParsedProject>(() => {
     return parseXerProject(SAMPLE_PROJECT_MAHSR, 'MAHSR-C4.xer');
@@ -77,7 +104,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500/30 selection:text-amber-200">
+    <div className="flex flex-col min-h-screen bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans selection:bg-amber-500/30 selection:text-amber-900 dark:selection:text-amber-200 transition-colors">
       {/* Top 3-Zone Navigation Bar */}
       <Navbar
         activeTab={activeTab}
@@ -86,6 +113,8 @@ export default function App() {
         onSelectSample={handleSelectSample}
         onDownloadXer={handleDownloadXer}
         activeProjectCode={project.metadata.code}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {/* Project Identity & KPI Summary Bar */}

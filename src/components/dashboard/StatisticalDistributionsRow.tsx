@@ -28,12 +28,12 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
       {/* Row 1: The 3 Core Histograms (Remaining Duration, Lags & Leads, Total Float) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* 1. Remaining Duration */}
-        <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-xl shadow-md flex flex-col justify-between">
-          <div className="pb-2 border-b border-slate-800/60 mb-2 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+        <div className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col justify-between">
+          <div className="pb-2 border-b border-slate-200/80 dark:border-slate-800/60 mb-2 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Remaining Duration
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">Working Days</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Working Days</span>
           </div>
 
           <div className="h-44 flex items-end justify-between gap-1 pt-6 pb-2 px-1">
@@ -44,7 +44,7 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
               return (
                 <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group">
                   {/* Number label above bar */}
-                  <span className="text-[9.5px] font-mono text-slate-300 font-semibold mb-1 tabular-nums">
+                  <span className="text-[9.5px] font-mono text-slate-700 dark:text-slate-300 font-semibold mb-1 tabular-nums">
                     {item.count > 0 ? item.count.toLocaleString() : '0'}
                   </span>
                   {/* Bar */}
@@ -57,7 +57,7 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
                     }`}
                   />
                   {/* Range label */}
-                  <span className="text-[8.5px] text-slate-400 mt-1 font-mono text-center truncate w-full" title={item.range}>
+                  <span className="text-[8.5px] text-slate-600 dark:text-slate-400 mt-1 font-mono text-center truncate w-full" title={item.range}>
                     {item.range}
                   </span>
                 </div>
@@ -67,12 +67,12 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
         </div>
 
         {/* 2. Lag's & Lead's */}
-        <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-xl shadow-md flex flex-col justify-between">
-          <div className="pb-2 border-b border-slate-800/60 mb-2 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+        <div className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col justify-between">
+          <div className="pb-2 border-b border-slate-200/80 dark:border-slate-800/60 mb-2 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Lag's &amp; Lead's
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">Days</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Days</span>
           </div>
 
           <div className="h-44 flex items-end justify-between gap-1 pt-6 pb-2 px-1">
@@ -83,7 +83,7 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
 
               return (
                 <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group">
-                  <span className="text-[9.5px] font-mono text-slate-300 font-semibold mb-1 tabular-nums">
+                  <span className="text-[9.5px] font-mono text-slate-700 dark:text-slate-300 font-semibold mb-1 tabular-nums">
                     {item.count > 0 ? item.count.toLocaleString() : '0'}
                   </span>
                   <div
@@ -98,7 +98,7 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
                         : 'bg-sky-600 hover:bg-sky-500'
                     }`}
                   />
-                  <span className="text-[8px] text-slate-400 mt-1 font-mono text-center truncate w-full" title={item.range}>
+                  <span className="text-[8px] text-slate-600 dark:text-slate-400 mt-1 font-mono text-center truncate w-full" title={item.range}>
                     {item.range}
                   </span>
                 </div>
@@ -108,12 +108,12 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
         </div>
 
         {/* 3. Total Float */}
-        <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-xl shadow-md flex flex-col justify-between">
-          <div className="pb-2 border-b border-slate-800/60 mb-2 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+        <div className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col justify-between">
+          <div className="pb-2 border-b border-slate-200/80 dark:border-slate-800/60 mb-2 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Total Float
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">Working Days</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Working Days</span>
           </div>
 
           <div className="h-44 flex items-end justify-between gap-1 pt-6 pb-2 px-1">
@@ -125,7 +125,7 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
 
               return (
                 <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group">
-                  <span className="text-[9.5px] font-mono text-slate-300 font-semibold mb-1 tabular-nums">
+                  <span className="text-[9.5px] font-mono text-slate-700 dark:text-slate-300 font-semibold mb-1 tabular-nums">
                     {item.count > 0 ? item.count.toLocaleString() : '0'}
                   </span>
                   <div
@@ -140,7 +140,7 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
                         : 'bg-emerald-600 hover:bg-emerald-500'
                     }`}
                   />
-                  <span className="text-[8.5px] text-slate-400 mt-1 font-mono text-center truncate w-full" title={item.range}>
+                  <span className="text-[8.5px] text-slate-600 dark:text-slate-400 mt-1 font-mono text-center truncate w-full" title={item.range}>
                     {item.range}
                   </span>
                 </div>
@@ -153,32 +153,32 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
       {/* Row 2: Resources Breakdown & Calendar Assignment Strip */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Resources and Assignment */}
-        <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-xl shadow-md">
-          <div className="pb-2 border-b border-slate-800/60 mb-3 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+        <div className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+          <div className="pb-2 border-b border-slate-200/80 dark:border-slate-800/60 mb-3 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Resources and Assignment
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">Counts &amp; Assignments</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Counts &amp; Assignments</span>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             {resourcesTypeBreakdown.map((res) => {
               const barHeightPct = Math.max(10, (res.noOfAssignments / maxAssign) * 100);
               return (
-                <div key={res.type} className="p-3 bg-slate-950/70 border border-slate-800 rounded-lg flex flex-col items-center">
-                  <span className="text-xs font-bold text-slate-300">{res.type}</span>
-                  <span className="text-[11px] font-mono text-slate-400 mt-0.5">
+                <div key={res.type} className="p-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-lg flex flex-col items-center">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-300">{res.type}</span>
+                  <span className="text-[11px] font-mono text-slate-600 dark:text-slate-400 mt-0.5">
                     {res.noOfResources} resources
                   </span>
 
-                  <div className="w-full h-20 bg-slate-900/60 rounded my-2 flex items-end justify-center p-1">
+                  <div className="w-full h-20 bg-slate-200/60 dark:bg-slate-900/60 rounded my-2 flex items-end justify-center p-1">
                     <div
                       style={{ height: `${barHeightPct}%` }}
                       className="w-10 rounded-t bg-emerald-600 flex items-center justify-center transition-all"
                     />
                   </div>
 
-                  <span className="text-xs font-mono font-bold text-emerald-400 tabular-nums">
+                  <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
                     {res.noOfAssignments.toLocaleString()}
                   </span>
                   <span className="text-[10px] text-slate-500">assignments</span>
@@ -189,25 +189,25 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
         </div>
 
         {/* Calendar Assignment */}
-        <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-xl shadow-md">
-          <div className="pb-2 border-b border-slate-800/60 mb-3 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+        <div className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+          <div className="pb-2 border-b border-slate-200/80 dark:border-slate-800/60 mb-3 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Calendar Assignment
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">Types &amp; Usage</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Types &amp; Usage</span>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             {calendarAssignmentBreakdown.map((cal) => (
-              <div key={cal.type} className="p-3 bg-slate-950/70 border border-slate-800 rounded-lg flex flex-col items-center justify-between">
-                <span className="text-xs font-bold text-slate-300">{cal.type}</span>
+              <div key={cal.type} className="p-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-lg flex flex-col items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-300">{cal.type}</span>
                 <div className="my-2 text-center">
-                  <span className="text-2xl font-mono font-extrabold text-amber-400 block tabular-nums">
+                  <span className="text-2xl font-mono font-extrabold text-amber-600 dark:text-amber-400 block tabular-nums">
                     {cal.noOfCalendars}
                   </span>
-                  <span className="text-[10px] text-slate-400">Calendars</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">Calendars</span>
                 </div>
-                <span className="text-[11px] font-mono text-slate-300 tabular-nums">
+                <span className="text-[11px] font-mono text-slate-700 dark:text-slate-300 tabular-nums">
                   {cal.noOfAssignments.toLocaleString()} assignments
                 </span>
               </div>
@@ -217,11 +217,11 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
       </div>
 
       {/* Row 3: Scatter Plot - Total Float Vs Remaining Duration (d) */}
-      <div className="p-5 bg-slate-900/90 border border-slate-800 rounded-xl shadow-md">
-        <div className="pb-2 border-b border-slate-800/60 mb-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="p-5 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+        <div className="pb-2 border-b border-slate-200/80 dark:border-slate-800/60 mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <ScatterIcon className="w-4 h-4 text-sky-400" />
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+            <ScatterIcon className="w-4 h-4 text-blue-600 dark:text-sky-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Total Float Vs Remaining Duration (d)
             </span>
           </div>
@@ -229,24 +229,24 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
           <div className="flex items-center gap-4 text-xs font-mono">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-0.5 border-t-2 border-dashed border-rose-500 inline-block" />
-              <span className="text-rose-400 font-semibold">Total Float: 14D</span>
+              <span className="text-rose-600 dark:text-rose-400 font-semibold">Total Float: 14D</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-0.5 border-t-2 border-dashed border-rose-500 inline-block" />
-              <span className="text-rose-400 font-semibold">Remaining Duration: 44D</span>
+              <span className="text-rose-600 dark:text-rose-400 font-semibold">Remaining Duration: 44D</span>
             </div>
           </div>
         </div>
 
         {/* SVG Scatter Chart Canvas */}
-        <div className="relative w-full h-72 bg-slate-950 rounded-lg border border-slate-800 p-4 select-none">
+        <div className="relative w-full h-72 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 p-4 select-none">
           <svg viewBox="0 0 800 240" className="w-full h-full overflow-visible">
             {/* Grid Lines */}
             {[0, 100, 200, 300, 400, 500, 600, 700].map((yVal) => {
               const y = 220 - (yVal / 800) * 200;
               return (
                 <g key={yVal}>
-                  <line x1="40" y1={y} x2="780" y2={y} stroke="#1E293B" strokeWidth="0.8" />
+                  <line x1="40" y1={y} x2="780" y2={y} stroke="#E2E8F0" className="stroke-slate-200 dark:stroke-slate-800" strokeWidth="0.8" />
                   <text x="32" y={y + 3} textAnchor="end" fill="#64748B" fontSize="9" fontFamily="monospace">
                     {yVal}
                   </text>
@@ -258,7 +258,7 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
               const x = 40 + (xVal / 500) * 740;
               return (
                 <g key={xVal}>
-                  <line x1={x} y1="20" x2={x} y2="220" stroke="#1E293B" strokeWidth="0.8" />
+                  <line x1={x} y1="20" x2={x} y2="220" stroke="#E2E8F0" className="stroke-slate-200 dark:stroke-slate-800" strokeWidth="0.8" />
                   <text x={x} y="235" textAnchor="middle" fill="#64748B" fontSize="9" fontFamily="monospace">
                     {xVal}
                   </text>
@@ -320,7 +320,7 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
                   cx={cx}
                   cy={cy}
                   r="4"
-                  fill={pt.isCritical ? '#F43F5E' : '#38BDF8'}
+                  fill={pt.isCritical ? '#F43F5E' : '#2563EB'}
                   opacity="0.85"
                   className="hover:scale-150 cursor-pointer transition-transform"
                 >

@@ -3,6 +3,8 @@ import {
   UploadCloud,
   Download,
   FolderOpen,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { SampleProjectInfo, SAMPLE_PROJECTS } from '../data/sampleXerData';
 
@@ -15,6 +17,8 @@ interface NavbarProps {
   onSelectSample: (sample: SampleProjectInfo) => void;
   onDownloadXer: () => void;
   activeProjectCode: string;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -24,31 +28,33 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectSample,
   onDownloadXer,
   activeProjectCode,
+  theme = 'light',
+  onToggleTheme,
 }) => {
   return (
-    <header className="flex items-center justify-between gap-8 px-6 py-3.5 bg-slate-900 border-b border-slate-800 shrink-0">
+    <header className="flex items-center justify-between gap-8 px-6 py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 shrink-0 shadow-sm transition-colors">
       {/* Zone 1: Single-element brand wordmark */}
       <div className="flex items-center gap-3 shrink-0">
         <a
           href="/"
-          className="text-base font-bold tracking-tight text-slate-100 whitespace-nowrap flex items-center gap-2 hover:text-amber-400 transition-colors"
+          className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap flex items-center gap-2 hover:text-amber-500 transition-colors"
         >
-          <span className="w-2.5 h-2.5 rounded-sm bg-amber-400 rotate-45 inline-block" />
+          <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 rotate-45 inline-block" />
           <span>Primavera P6 Health Check</span>
         </a>
-        <span className="text-xs text-slate-500 font-mono hidden sm:inline">
+        <span className="text-xs text-slate-500 dark:text-slate-400 font-mono hidden sm:inline">
           / {activeProjectCode}
         </span>
       </div>
 
       {/* Zone 2: Navigation Links */}
-      <nav className="hidden md:flex items-center gap-1 text-xs font-medium text-slate-400 overflow-x-auto py-0.5">
+      <nav className="hidden md:flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-400 overflow-x-auto py-0.5">
         <button
           onClick={() => onTabChange('healthDashboard')}
           className={`px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0 transition-colors flex items-center gap-1.5 ${
             activeTab === 'healthDashboard'
               ? 'bg-amber-400 text-slate-950 shadow-sm font-bold'
-              : 'hover:text-slate-200 hover:bg-slate-800/40 text-amber-300'
+              : 'hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/40 text-amber-700 dark:text-amber-300'
           }`}
         >
           <span className="w-2 h-2 rounded-full bg-amber-500" />
@@ -58,8 +64,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => onTabChange('gantt')}
           className={`px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'gantt'
-              ? 'bg-slate-800 text-slate-100 shadow-sm font-semibold'
-              : 'hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100 shadow-sm font-semibold'
+              : 'hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/40'
           }`}
         >
           Gantt Timeline
@@ -68,8 +74,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => onTabChange('activities')}
           className={`px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'activities'
-              ? 'bg-slate-800 text-slate-100 shadow-sm font-semibold'
-              : 'hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100 shadow-sm font-semibold'
+              : 'hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/40'
           }`}
         >
           Activity Sheet
@@ -78,8 +84,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => onTabChange('wbs')}
           className={`px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'wbs'
-              ? 'bg-slate-800 text-slate-100 shadow-sm font-semibold'
-              : 'hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100 shadow-sm font-semibold'
+              : 'hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/40'
           }`}
         >
           WBS Tree
@@ -88,8 +94,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => onTabChange('dcma')}
           className={`px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'dcma'
-              ? 'bg-slate-800 text-slate-100 shadow-sm font-semibold'
-              : 'hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100 shadow-sm font-semibold'
+              : 'hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/40'
           }`}
         >
           DCMA 14 Audit
@@ -98,8 +104,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => onTabChange('resources')}
           className={`px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'resources'
-              ? 'bg-slate-800 text-slate-100 shadow-sm font-semibold'
-              : 'hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100 shadow-sm font-semibold'
+              : 'hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/40'
           }`}
         >
           Resources
@@ -108,20 +114,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => onTabChange('raw')}
           className={`px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'raw'
-              ? 'bg-slate-800 text-slate-100 shadow-sm font-semibold'
-              : 'hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100 shadow-sm font-semibold'
+              : 'hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/40'
           }`}
         >
           Raw Tables (%T)
         </button>
       </nav>
 
-      {/* Zone 3: Primary Action & Sample Selector */}
-      <div className="flex items-center gap-2.5 shrink-0">
+      {/* Zone 3: Primary Action, Theme Toggle & Sample Selector */}
+      <div className="flex items-center gap-2 shrink-0">
         {/* Sample selector dropdown */}
         <select
           aria-label="Select sample project"
-          className="bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-300 py-1.5 px-2.5 focus:outline-none focus:border-amber-500 hidden sm:block"
+          className="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-800 dark:text-slate-300 py-1.5 px-2.5 focus:outline-none focus:border-amber-500 hidden sm:block"
           onChange={(e) => {
             const sample = SAMPLE_PROJECTS.find((s) => s.id === e.target.value);
             if (sample) onSelectSample(sample);
@@ -136,11 +142,32 @@ export const Navbar: React.FC<NavbarProps> = ({
           ))}
         </select>
 
+        {/* Theme Toggle (Light / Dark) */}
+        {onToggleTheme && (
+          <button
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+            className="p-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 rounded-lg transition-colors flex items-center gap-1.5 text-xs"
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden xl:inline">Light</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-3.5 h-3.5 text-slate-600" />
+                <span className="hidden xl:inline">Dark</span>
+              </>
+            )}
+          </button>
+        )}
+
         {/* Export / Download button */}
         <button
           onClick={onDownloadXer}
           title="Export and Download valid .XER file"
-          className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 border border-slate-800 rounded-lg transition-colors hidden lg:flex items-center gap-1 text-xs"
+          className="p-1.5 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 bg-slate-100 dark:bg-transparent hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 rounded-lg transition-colors hidden lg:flex items-center gap-1 text-xs"
         >
           <Download className="w-3.5 h-3.5" />
           <span className="hidden xl:inline">Export .XER</span>

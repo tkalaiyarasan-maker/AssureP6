@@ -25,24 +25,24 @@ export const P6HealthCheckDashboard: React.FC<P6HealthCheckDashboardProps> = ({ 
   const [subTab, setSubTab] = useState<DashboardSubTab>('overview');
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
-      {/* 1. Master Header Title Banner */}
-      <div className="px-6 py-3.5 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800 flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-lg transition-colors">
+      {/* 1. Master Header Title Banner (Executive Navy Banner matching reference image P61.png) */}
+      <div className="px-6 py-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-3 shadow-sm">
         <div className="flex items-center gap-3">
           <Award className="w-5 h-5 text-amber-400" />
-          <h1 className="text-base font-extrabold tracking-wide uppercase text-slate-100">
+          <h1 className="text-base font-extrabold tracking-wide uppercase text-white">
             P6 Programme Health Check – Dashboard
           </h1>
         </div>
 
         {/* Sub-view Navigation Tabs */}
-        <div className="flex items-center p-0.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-medium">
+        <div className="flex items-center p-0.5 bg-slate-950/80 border border-slate-700 rounded-lg text-xs font-medium">
           <button
             onClick={() => setSubTab('overview')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
               subTab === 'overview'
-                ? 'bg-slate-800 text-slate-100 shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-slate-800 text-white shadow'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             <LayoutDashboard className="w-3.5 h-3.5 text-sky-400" />
@@ -52,8 +52,8 @@ export const P6HealthCheckDashboard: React.FC<P6HealthCheckDashboardProps> = ({ 
             onClick={() => setSubTab('distributions')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
               subTab === 'distributions'
-                ? 'bg-slate-800 text-slate-100 shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-slate-800 text-white shadow'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
@@ -63,8 +63,8 @@ export const P6HealthCheckDashboard: React.FC<P6HealthCheckDashboardProps> = ({ 
             onClick={() => setSubTab('checklist')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
               subTab === 'checklist'
-                ? 'bg-slate-800 text-slate-100 shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-slate-800 text-white shadow'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             <TableIcon className="w-3.5 h-3.5 text-amber-400" />
@@ -74,8 +74,8 @@ export const P6HealthCheckDashboard: React.FC<P6HealthCheckDashboardProps> = ({ 
             onClick={() => setSubTab('ranked')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
               subTab === 'ranked'
-                ? 'bg-slate-800 text-slate-100 shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-slate-800 text-white shadow'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             <ListOrdered className="w-3.5 h-3.5 text-rose-400" />
@@ -85,7 +85,7 @@ export const P6HealthCheckDashboard: React.FC<P6HealthCheckDashboardProps> = ({ 
       </div>
 
       {/* 2. Scrollable Body containing the exact layout */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 bg-slate-100/60 dark:bg-slate-950">
         {/* Top 6 KPI Score Cards */}
         <ExecutiveScoreCards data={data} />
 
@@ -119,32 +119,32 @@ export const P6HealthCheckDashboard: React.FC<P6HealthCheckDashboardProps> = ({ 
         )}
 
         {subTab === 'ranked' && (
-          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-md space-y-3">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <h3 className="text-sm font-bold text-slate-100">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                   Ranked Priority Issues – Largest Units Lost First
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Items having highest point deduction in the 100-unit evaluation. Resolving these will yield the fastest score recovery.
                 </p>
               </div>
-              <span className="text-xs font-mono text-rose-400 font-bold px-2 py-0.5 rounded bg-rose-950/80 border border-rose-800">
+              <span className="text-xs font-mono text-rose-700 dark:text-rose-400 font-bold px-2 py-0.5 rounded bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800">
                 Total Units Lost: {(100 - data.scoring.totalUnitsEarned).toFixed(2)}
               </span>
             </div>
 
-            <div className="divide-y divide-slate-800/60 font-mono text-xs">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono text-xs">
               {data.rankedDeficiencies.map((item, idx) => (
-                <div key={item.id} className="py-3 flex items-center justify-between gap-4 hover:bg-slate-800/30 px-2 rounded transition-colors">
+                <div key={item.id} className="py-3 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/30 px-2 rounded transition-colors">
                   <div className="flex items-center gap-3">
-                    <span className="w-6 text-slate-500 font-semibold">{idx + 1}</span>
-                    <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20">
+                    <span className="w-6 text-slate-400 dark:text-slate-500 font-semibold">{idx + 1}</span>
+                    <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-800 dark:text-amber-400 font-bold border border-amber-500/20">
                       {item.id}
                     </span>
                     <div>
-                      <span className="font-sans font-medium text-slate-200">{item.parameter}</span>
-                      <div className="text-[11px] text-slate-400 font-sans flex items-center gap-2 mt-0.5">
+                      <span className="font-sans font-medium text-slate-800 dark:text-slate-200">{item.parameter}</span>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-sans flex items-center gap-2 mt-0.5">
                         <span>Theme: {item.theme}</span>
                         <span>·</span>
                         <span>Target: {item.targetStr} (Actual: {item.resultStr})</span>
@@ -154,7 +154,7 @@ export const P6HealthCheckDashboard: React.FC<P6HealthCheckDashboardProps> = ({ 
 
                   <div className="flex items-center gap-4 text-right shrink-0">
                     <div>
-                      <span className="text-rose-400 font-bold text-sm block tabular-nums">
+                      <span className="text-rose-600 dark:text-rose-400 font-bold text-sm block tabular-nums">
                         -{item.unitsLost.toFixed(2)} units
                       </span>
                       <span className="text-[10px] text-slate-500 uppercase">{item.action}</span>

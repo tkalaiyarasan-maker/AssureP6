@@ -169,9 +169,9 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   }, [filteredActivities]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+    <div className="flex flex-col h-[calc(100vh-140px)] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-lg transition-colors">
       {/* Gantt Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3 bg-slate-900 border-b border-slate-800 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-xs">
         <div className="flex items-center gap-3">
           {/* Search */}
           <div className="relative">
@@ -181,7 +181,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
               placeholder="Search Activity ID or Name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500 w-56 text-xs"
+              className="pl-8 pr-3 py-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-amber-500 w-56 text-xs"
             />
           </div>
 
@@ -190,8 +190,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             onClick={() => setOnlyCritical(!onlyCritical)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-medium transition-colors ${
               onlyCritical
-                ? 'bg-rose-950/80 text-rose-300 border-rose-800 shadow-sm'
-                : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+                ? 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-800 shadow-sm'
+                : 'bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <Filter className="w-3.5 h-3.5" />
@@ -203,11 +203,11 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             onClick={() => setShowLogicLinks(!showLogicLinks)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-medium transition-colors ${
               showLogicLinks
-                ? 'bg-slate-800 text-slate-200 border-slate-700'
-                : 'bg-slate-950 text-slate-500 border-slate-800 hover:text-slate-300'
+                ? 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700'
+                : 'bg-white dark:bg-slate-950 text-slate-500 border-slate-300 dark:border-slate-800 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
-            {showLogicLinks ? <Eye className="w-3.5 h-3.5 text-sky-400" /> : <EyeOff className="w-3.5 h-3.5" />}
+            {showLogicLinks ? <Eye className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" /> : <EyeOff className="w-3.5 h-3.5" />}
             Logic Links
           </button>
         </div>
@@ -215,31 +215,31 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         {/* Zoom & Info */}
         <div className="flex items-center gap-4">
           {/* Legend */}
-          <div className="hidden lg:flex items-center gap-3 text-[11px] text-slate-400">
+          <div className="hidden lg:flex items-center gap-3 text-[11px] text-slate-600 dark:text-slate-400">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-2 rounded bg-rose-500" />
               <span>Critical</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-2 rounded bg-sky-500" />
+              <span className="w-3 h-2 rounded bg-blue-600 dark:bg-sky-500" />
               <span>Standard</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rotate-45 bg-amber-400 inline-block" />
+              <span className="w-2.5 h-2.5 rotate-45 bg-amber-500 inline-block" />
               <span>Milestone</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 border-t border-dashed border-rose-400" />
+              <span className="w-3 h-0.5 border-t border-dashed border-rose-500" />
               <span>Data Date</span>
             </div>
           </div>
 
           {/* Time Scale Zoom Segmented Buttons */}
-          <div className="flex items-center p-0.5 bg-slate-950 border border-slate-800 rounded-lg">
+          <div className="flex items-center p-0.5 bg-slate-200/70 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg">
             <button
               onClick={() => setTimeScale('week')}
               className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                timeScale === 'week' ? 'bg-slate-800 text-slate-100 shadow' : 'text-slate-400 hover:text-slate-200'
+                timeScale === 'week' ? 'bg-white text-slate-900 shadow-sm font-semibold dark:bg-slate-800 dark:text-slate-100' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               Weeks
@@ -247,7 +247,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             <button
               onClick={() => setTimeScale('month')}
               className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                timeScale === 'month' ? 'bg-slate-800 text-slate-100 shadow' : 'text-slate-400 hover:text-slate-200'
+                timeScale === 'month' ? 'bg-white text-slate-900 shadow-sm font-semibold dark:bg-slate-800 dark:text-slate-100' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               Months
@@ -255,7 +255,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             <button
               onClick={() => setTimeScale('quarter')}
               className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                timeScale === 'quarter' ? 'bg-slate-800 text-slate-100 shadow' : 'text-slate-400 hover:text-slate-200'
+                timeScale === 'quarter' ? 'bg-white text-slate-900 shadow-sm font-semibold dark:bg-slate-800 dark:text-slate-100' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               Quarters
@@ -267,10 +267,10 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       {/* Main Gantt Split Screen */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Frozen Table Columns */}
-        <div className="w-[380px] lg:w-[460px] shrink-0 border-r border-slate-800 flex flex-col bg-slate-950">
+        <div className="w-[380px] lg:w-[460px] shrink-0 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-950">
           {/* Header row */}
           <div
-            className="flex items-center h-12 px-3 border-b border-slate-800 bg-slate-900/70 text-[11px] font-semibold text-slate-400 uppercase tracking-wider select-none shrink-0"
+            className="flex items-center h-12 px-3 border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 text-[11px] font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider select-none shrink-0"
           >
             <div className="w-24">Act ID</div>
             <div className="flex-1 px-2">Activity Name</div>
@@ -280,7 +280,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
           </div>
 
           {/* Body Rows */}
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-800/40 font-mono text-xs select-none">
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/40 font-mono text-xs select-none">
             {filteredActivities.length === 0 ? (
               <div className="p-8 text-center text-slate-500 font-sans">
                 No activities match the current filters.
@@ -299,14 +299,14 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                     style={{ height: `${rowHeight}px` }}
                     className={`flex items-center px-3 cursor-pointer transition-colors ${
                       isSelected
-                        ? 'bg-amber-500/15 text-amber-200'
+                        ? 'bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-200'
                         : isHovered
-                        ? 'bg-slate-800/40 text-slate-100'
-                        : 'text-slate-300 hover:bg-slate-900/50'
+                        ? 'bg-slate-100 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100'
+                        : 'text-slate-800 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/50'
                     }`}
                   >
                     {/* Activity Code */}
-                    <div className="w-24 truncate font-semibold text-amber-400">
+                    <div className="w-24 truncate font-semibold text-amber-700 dark:text-amber-400">
                       {act.code}
                     </div>
 
@@ -315,25 +315,25 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                       {act.isCritical && (
                         <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" title="Critical Task" />
                       )}
-                      <span className="truncate">{act.name}</span>
+                      <span className="truncate text-slate-900 dark:text-slate-100 font-medium">{act.name}</span>
                     </div>
 
                     {/* Duration in Days */}
-                    <div className="w-14 text-right tabular-nums text-slate-400 text-[11px]">
+                    <div className="w-14 text-right tabular-nums text-slate-600 dark:text-slate-400 text-[11px]">
                       {act.origDurationDays}d
                     </div>
 
                     {/* Total Float */}
                     <div
                       className={`w-16 text-right tabular-nums text-[11px] ${
-                        act.totalFloatDays <= 0 ? 'text-rose-400 font-medium' : 'text-slate-400'
+                        act.totalFloatDays <= 0 ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-600 dark:text-slate-400'
                       }`}
                     >
                       {act.totalFloatDays}d
                     </div>
 
                     {/* Progress % */}
-                    <div className="w-14 text-right tabular-nums text-[11px] text-emerald-400 font-medium">
+                    <div className="w-14 text-right tabular-nums text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">
                       {act.physCompletePct}%
                     </div>
                   </div>
@@ -344,10 +344,10 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         </div>
 
         {/* Right Scrollable Timeline Canvas */}
-        <div ref={containerRef} className="flex-1 overflow-auto bg-slate-950 relative">
+        <div ref={containerRef} className="flex-1 overflow-auto bg-slate-50/50 dark:bg-slate-950 relative">
           <div style={{ width: `${timelineWidth}px` }} className="relative select-none min-h-full">
             {/* Timeline Header */}
-            <div className="sticky top-0 z-20 flex h-12 border-b border-slate-800 bg-slate-900/90 backdrop-blur-sm">
+            <div className="sticky top-0 z-20 flex h-12 border-b border-slate-200 dark:border-slate-800 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-sm">
               {timelineTicks.map((tick, i) => (
                 <div
                   key={i}
@@ -356,7 +356,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                     left: `${tick.x}px`,
                     width: `${tick.width}px`,
                   }}
-                  className="h-full border-r border-slate-800/80 px-2 flex flex-col justify-center text-xs text-slate-400 font-medium truncate"
+                  className="h-full border-r border-slate-200 dark:border-slate-800/80 px-2 flex flex-col justify-center text-xs text-slate-600 dark:text-slate-400 font-semibold truncate"
                 >
                   <span>{tick.label}</span>
                 </div>
@@ -369,7 +369,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                 <div
                   key={i}
                   style={{ left: `${tick.x}px` }}
-                  className="absolute top-0 bottom-0 border-r border-slate-800/30"
+                  className="absolute top-0 bottom-0 border-r border-slate-200/60 dark:border-slate-800/30"
                 />
               ))}
 
@@ -379,7 +379,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                   style={{ left: `${dataDateX}px` }}
                   className="absolute top-0 bottom-0 border-r-2 border-dashed border-rose-500 z-10"
                 >
-                  <span className="absolute top-1 left-1.5 px-1.5 py-0.5 rounded bg-rose-950/80 text-rose-300 border border-rose-800 text-[10px] font-mono whitespace-nowrap">
+                  <span className="absolute top-1 left-1.5 px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-300 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-800 text-[10px] font-mono whitespace-nowrap font-bold shadow-sm">
                     Data Date: {project.metadata.dataDate}
                   </span>
                 </div>

@@ -136,9 +136,9 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+    <div className="flex flex-col h-[calc(100vh-140px)] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-lg transition-colors">
       {/* Table Filter Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-900 border-b border-slate-800 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-xs">
         <div className="flex flex-wrap items-center gap-3">
           {/* Search Input */}
           <div className="relative">
@@ -148,16 +148,18 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
               placeholder="Search ID, name, WBS, resource..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500 w-64 text-xs"
+              className="pl-8 pr-3 py-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-amber-500 w-64 text-xs"
             />
           </div>
 
           {/* Status Segmented Buttons */}
-          <div className="flex items-center p-0.5 bg-slate-950 border border-slate-800 rounded-lg">
+          <div className="flex items-center p-0.5 bg-slate-200/70 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg">
             <button
               onClick={() => setStatusFilter('all')}
               className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                statusFilter === 'all' ? 'bg-slate-800 text-slate-100 shadow' : 'text-slate-400 hover:text-slate-200'
+                statusFilter === 'all'
+                  ? 'bg-white text-slate-900 shadow-sm font-semibold dark:bg-slate-800 dark:text-slate-100'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               All ({project.activities.length})
@@ -166,8 +168,8 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
               onClick={() => setStatusFilter('TK_NotStart')}
               className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                 statusFilter === 'TK_NotStart'
-                  ? 'bg-slate-800 text-slate-100 shadow'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-slate-900 shadow-sm font-semibold dark:bg-slate-800 dark:text-slate-100'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               Not Started ({project.stats.notStartedCount})
@@ -175,7 +177,9 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
             <button
               onClick={() => setStatusFilter('TK_Active')}
               className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                statusFilter === 'TK_Active' ? 'bg-slate-800 text-slate-100 shadow' : 'text-slate-400 hover:text-slate-200'
+                statusFilter === 'TK_Active'
+                  ? 'bg-white text-slate-900 shadow-sm font-semibold dark:bg-slate-800 dark:text-slate-100'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               In Progress ({project.stats.inProgressCount})
@@ -184,8 +188,8 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
               onClick={() => setStatusFilter('TK_Complete')}
               className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                 statusFilter === 'TK_Complete'
-                  ? 'bg-slate-800 text-slate-100 shadow'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-slate-900 shadow-sm font-semibold dark:bg-slate-800 dark:text-slate-100'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               Completed ({project.stats.completedCount})
@@ -197,11 +201,11 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
             onClick={() => setCriticalOnly(!criticalOnly)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-medium transition-colors ${
               criticalOnly
-                ? 'bg-rose-950/80 text-rose-300 border-rose-800 shadow-sm'
-                : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+                ? 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-800 shadow-sm'
+                : 'bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
             Critical Path ({project.stats.criticalCount})
           </button>
 
@@ -210,8 +214,8 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
             onClick={() => setMilestonesOnly(!milestonesOnly)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-medium transition-colors ${
               milestonesOnly
-                ? 'bg-amber-950/80 text-amber-300 border-amber-800 shadow-sm'
-                : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+                ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-800 shadow-sm'
+                : 'bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             Milestones ({project.stats.milestoneCount})
@@ -221,17 +225,17 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
         {/* Export CSV Button */}
         <button
           onClick={handleExportCsv}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium transition-colors whitespace-nowrap"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-medium transition-colors whitespace-nowrap"
         >
-          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           Export to CSV
         </button>
       </div>
 
       {/* High-Density Spreadsheet Table */}
-      <div className="flex-1 overflow-auto bg-slate-950 select-none">
+      <div className="flex-1 overflow-auto bg-white dark:bg-slate-950 select-none">
         <table className="w-full text-left text-xs border-collapse">
-          <thead className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800 font-semibold text-slate-400 uppercase tracking-wider text-[11px]">
+          <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider text-[11px]">
             <tr>
               <th
                 onClick={() => handleSort('code')}
@@ -336,7 +340,7 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
               <th className="py-3 px-3 text-slate-400">Assigned Resources</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60 font-mono">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
             {filteredAndSortedActivities.length === 0 ? (
               <tr>
                 <td colSpan={12} className="py-12 text-center text-slate-500 font-sans">
@@ -354,12 +358,12 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
                     onClick={() => onSelectActivity(act)}
                     className={`cursor-pointer transition-colors ${
                       isSelected
-                        ? 'bg-amber-500/15 text-amber-200'
-                        : 'hover:bg-slate-900/60 text-slate-300'
+                        ? 'bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-200'
+                        : 'hover:bg-slate-50 dark:hover:bg-slate-900/60 text-slate-800 dark:text-slate-300'
                     }`}
                   >
                     {/* Activity Code */}
-                    <td className="py-2.5 px-3 font-semibold text-amber-400 whitespace-nowrap">
+                    <td className="py-2.5 px-3 font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         {act.isCritical && (
                           <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" title="Critical Path Task" />
@@ -372,9 +376,9 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
                     <td className="py-2.5 px-3 font-sans text-xs">
                       <div className="flex items-center gap-2">
                         {isMilestone && (
-                          <span className="w-2.5 h-2.5 rotate-45 bg-amber-400 shrink-0" title="Milestone" />
+                          <span className="w-2.5 h-2.5 rotate-45 bg-amber-500 shrink-0" title="Milestone" />
                         )}
-                        <span className="truncate max-w-md font-medium text-slate-100">
+                        <span className="truncate max-w-md font-medium text-slate-900 dark:text-slate-100">
                           {act.name}
                         </span>
                       </div>
@@ -383,37 +387,37 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
                     {/* Status */}
                     <td className="py-2.5 px-3 font-sans whitespace-nowrap">
                       {act.status === 'TK_Complete' ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
                           <CheckCircle2 className="w-3.5 h-3.5" /> Complete
                         </span>
                       ) : act.status === 'TK_Active' ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-sky-400">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-blue-700 dark:text-sky-400 font-medium">
                           <Clock className="w-3.5 h-3.5" /> In Progress
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
                           <Circle className="w-3.5 h-3.5" /> Not Started
                         </span>
                       )}
                     </td>
 
                     {/* WBS */}
-                    <td className="py-2.5 px-3 font-sans text-slate-400 truncate max-w-[160px] text-[11px]">
+                    <td className="py-2.5 px-3 font-sans text-slate-600 dark:text-slate-400 truncate max-w-[160px] text-[11px]">
                       {act.wbsName}
                     </td>
 
                     {/* Orig Duration */}
-                    <td className="py-2.5 px-3 text-right tabular-nums text-slate-200 whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-right tabular-nums text-slate-800 dark:text-slate-200 whitespace-nowrap">
                       {act.origDurationDays}d
                     </td>
 
                     {/* % Complete */}
                     <td className="py-2.5 px-3 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1.5">
-                        <span className="tabular-nums font-medium text-emerald-400">
+                        <span className="tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">
                           {act.physCompletePct}%
                         </span>
-                        <div className="w-10 bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div className="w-10 bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
                           <div
                             className="bg-emerald-500 h-full rounded-full"
                             style={{ width: `${Math.min(100, act.physCompletePct)}%` }}
@@ -423,46 +427,46 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
                     </td>
 
                     {/* Start Date */}
-                    <td className="py-2.5 px-3 tabular-nums text-slate-300 whitespace-nowrap">
+                    <td className="py-2.5 px-3 tabular-nums text-slate-700 dark:text-slate-300 whitespace-nowrap">
                       {act.startDate || '—'}
                     </td>
 
                     {/* Finish Date */}
-                    <td className="py-2.5 px-3 tabular-nums text-slate-300 whitespace-nowrap">
+                    <td className="py-2.5 px-3 tabular-nums text-slate-700 dark:text-slate-300 whitespace-nowrap">
                       {act.finishDate || '—'}
                     </td>
 
                     {/* Total Float */}
                     <td
                       className={`py-2.5 px-3 text-right tabular-nums whitespace-nowrap ${
-                        act.totalFloatDays <= 0 ? 'text-rose-400 font-semibold' : 'text-slate-400'
+                        act.totalFloatDays <= 0 ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-600 dark:text-slate-400'
                       }`}
                     >
                       {act.totalFloatDays}d
                     </td>
 
                     {/* Predecessors */}
-                    <td className="py-2.5 px-3 text-slate-400 truncate max-w-[140px] text-[11px]">
+                    <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400 truncate max-w-[140px] text-[11px]">
                       {act.predecessors.length === 0 ? (
-                        <span className="text-amber-500/80">Open Start</span>
+                        <span className="text-amber-700 dark:text-amber-500/80 font-medium">Open Start</span>
                       ) : (
                         act.predecessors.map((p) => p.predTaskCode || p.predTaskId).join(', ')
                       )}
                     </td>
 
                     {/* Successors */}
-                    <td className="py-2.5 px-3 text-slate-400 truncate max-w-[140px] text-[11px]">
+                    <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400 truncate max-w-[140px] text-[11px]">
                       {act.successors.length === 0 ? (
-                        <span className="text-amber-500/80">Open Finish</span>
+                        <span className="text-amber-700 dark:text-amber-500/80 font-medium">Open Finish</span>
                       ) : (
                         act.successors.map((s) => s.predTaskCode || s.taskId).join(', ')
                       )}
                     </td>
 
                     {/* Resources */}
-                    <td className="py-2.5 px-3 font-sans text-slate-400 truncate max-w-[160px] text-[11px]">
+                    <td className="py-2.5 px-3 font-sans text-slate-600 dark:text-slate-400 truncate max-w-[160px] text-[11px]">
                       {act.assignments.length === 0 ? (
-                        <span className="text-slate-600">—</span>
+                        <span className="text-slate-400 dark:text-slate-600">—</span>
                       ) : (
                         act.assignments.map((a) => a.resourceCode).join(', ')
                       )}
@@ -476,10 +480,10 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
       </div>
 
       {/* Status Bar */}
-      <div className="px-4 py-2 bg-slate-900 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+      <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between">
         <span>
-          Showing <span className="text-slate-200 font-mono">{filteredAndSortedActivities.length}</span> of{' '}
-          <span className="text-slate-200 font-mono">{project.activities.length}</span> activities
+          Showing <span className="text-slate-900 dark:text-slate-200 font-mono font-semibold">{filteredAndSortedActivities.length}</span> of{' '}
+          <span className="text-slate-900 dark:text-slate-200 font-mono font-semibold">{project.activities.length}</span> activities
         </span>
         <span className="text-slate-500">
           Tip: Click any row to view complete predecessors, successors, and resource assignments.

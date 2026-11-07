@@ -83,26 +83,26 @@ export const VisualChartsRow: React.FC<VisualChartsRowProps> = ({ data }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
       {/* 1. Radar / Spider Chart */}
-      <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-xl shadow-md flex flex-col items-center">
-        <div className="w-full flex items-center justify-between pb-2 border-b border-slate-800/60 mb-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+      <div className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col items-center">
+        <div className="w-full flex items-center justify-between pb-2 border-b border-slate-200/80 dark:border-slate-800/60 mb-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
             9-Theme Radar Evaluation
           </span>
           {/* Legend */}
           <div className="flex items-center gap-3 text-[11px]">
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 bg-sky-400 inline-block" />
-              <span className="text-slate-300">Score</span>
+              <span className="w-3 h-0.5 bg-blue-600 inline-block" />
+              <span className="text-slate-700 dark:text-slate-300 font-medium">Score</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 border-t border-dashed border-rose-400 inline-block" />
-              <span className="text-slate-300">Target (85%)</span>
+              <span className="w-3 h-0.5 border-t border-dashed border-rose-500 inline-block" />
+              <span className="text-slate-700 dark:text-slate-300 font-medium">Target (85%)</span>
             </div>
           </div>
         </div>
 
         {/* SVG Radar */}
-        <div className="relative w-full flex items-center justify-center">
+        <div className="relative w-full flex items-center justify-center py-1">
           <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[310px] h-auto overflow-visible select-none">
             {/* Concentric rings */}
             {rings.map((ringVal) => {
@@ -119,8 +119,9 @@ export const VisualChartsRow: React.FC<VisualChartsRowProps> = ({ data }) => {
                   <polygon
                     points={polyPoints}
                     fill="none"
-                    stroke="#334155"
-                    strokeWidth="0.8"
+                    stroke="#E2E8F0"
+                    className="stroke-slate-200 dark:stroke-slate-700"
+                    strokeWidth="0.9"
                     strokeDasharray={ringVal === 100 ? 'none' : '2,2'}
                   />
                   <text
@@ -154,17 +155,18 @@ export const VisualChartsRow: React.FC<VisualChartsRowProps> = ({ data }) => {
                     y1={center}
                     x2={spokeEnd.x}
                     y2={spokeEnd.y}
-                    stroke="#334155"
-                    strokeWidth="0.75"
+                    stroke="#E2E8F0"
+                    className="stroke-slate-200 dark:stroke-slate-700"
+                    strokeWidth="0.85"
                   />
                   <text
                     x={end.x}
                     y={end.y + (Math.sin(angle) > 0.5 ? 8 : -2)}
                     textAnchor={textAnchor}
-                    fill="#94A3B8"
-                    fontSize="9.5"
-                    fontWeight="500"
-                    className="select-none"
+                    fill="#334155"
+                    className="fill-slate-700 dark:fill-slate-300 select-none text-[10px]"
+                    fontSize="10"
+                    fontWeight="600"
                   >
                     {t.theme.replace('A: ', '')}
                   </text>
@@ -175,7 +177,7 @@ export const VisualChartsRow: React.FC<VisualChartsRowProps> = ({ data }) => {
             {/* Target 85% Polygon (Red Dashed) */}
             <polygon
               points={targetPoints}
-              fill="rgba(244, 63, 94, 0.05)"
+              fill="rgba(244, 63, 94, 0.04)"
               stroke="#F43F5E"
               strokeWidth="1.5"
               strokeDasharray="4,3"
@@ -184,8 +186,8 @@ export const VisualChartsRow: React.FC<VisualChartsRowProps> = ({ data }) => {
             {/* Actual Score Polygon (Blue Solid) */}
             <polygon
               points={scorePoints}
-              fill="rgba(56, 189, 248, 0.2)"
-              stroke="#38BDF8"
+              fill="rgba(37, 99, 235, 0.15)"
+              stroke="#2563EB"
               strokeWidth="2"
             />
 
@@ -198,8 +200,9 @@ export const VisualChartsRow: React.FC<VisualChartsRowProps> = ({ data }) => {
                   cx={pt.x}
                   cy={pt.y}
                   r="3.5"
-                  fill="#38BDF8"
-                  stroke="#0F172A"
+                  fill="#2563EB"
+                  stroke="#FFFFFF"
+                  className="stroke-white dark:stroke-slate-900"
                   strokeWidth="1.5"
                 >
                   <title>{`${t.theme}: ${t.scorePct}% (Target: 85%)`}</title>
@@ -211,9 +214,9 @@ export const VisualChartsRow: React.FC<VisualChartsRowProps> = ({ data }) => {
       </div>
 
       {/* 2. Donut Chart 1: Critical-key items (Yes) */}
-      <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-xl shadow-md flex flex-col items-center justify-between">
-        <div className="w-full pb-2 border-b border-slate-800/60 mb-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+      <div className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col items-center justify-between">
+        <div className="w-full pb-2 border-b border-slate-200/80 dark:border-slate-800/60 mb-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
             Critical-Key Items (Yes)
           </span>
         </div>
@@ -227,7 +230,8 @@ export const VisualChartsRow: React.FC<VisualChartsRowProps> = ({ data }) => {
               cy="96"
               r={donutRadius}
               fill="transparent"
-              stroke="#1E293B"
+              stroke="#E2E8F0"
+              className="stroke-slate-200 dark:stroke-slate-800"
               strokeWidth="22"
             />
             {/* Pass Segment (Green) */}
@@ -259,36 +263,36 @@ export const VisualChartsRow: React.FC<VisualChartsRowProps> = ({ data }) => {
 
           {/* Center Text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-3xl font-mono font-extrabold text-slate-100">
+            <span className="text-3xl font-mono font-extrabold text-slate-900 dark:text-slate-100">
               {critTotal}
             </span>
-            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-600 dark:text-emerald-400">
               {critRecheck === 0 ? '100% Passed' : `${critRecheck} Recheck`}
             </span>
           </div>
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] pt-2 border-t border-slate-800/80 w-full font-mono">
+        <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] pt-2 border-t border-slate-200/80 dark:border-slate-800/80 w-full font-mono">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />
-            <span className="text-slate-300">Critical – Pass ({critPass})</span>
+            <span className="text-slate-700 dark:text-slate-300">Critical – Pass ({critPass})</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block" />
-            <span className="text-slate-400">Critical – Recheck ({critRecheck})</span>
+            <span className="text-slate-600 dark:text-slate-400">Critical – Recheck ({critRecheck})</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block" />
-            <span className="text-slate-400">Critical – Other (0)</span>
+            <span className="text-slate-600 dark:text-slate-400">Critical – Other (0)</span>
           </div>
         </div>
       </div>
 
       {/* 3. Donut Chart 2: All 54 Checks by Status */}
-      <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-xl shadow-md flex flex-col items-center justify-between">
-        <div className="w-full pb-2 border-b border-slate-800/60 mb-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+      <div className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col items-center justify-between">
+        <div className="w-full pb-2 border-b border-slate-200/80 dark:border-slate-800/60 mb-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
             All 54 Checks by Status
           </span>
         </div>
@@ -301,7 +305,8 @@ export const VisualChartsRow: React.FC<VisualChartsRowProps> = ({ data }) => {
               cy="96"
               r={donutRadius}
               fill="transparent"
-              stroke="#1E293B"
+              stroke="#E2E8F0"
+              className="stroke-slate-200 dark:stroke-slate-800"
               strokeWidth="22"
             />
             {/* Pass Segment */}
@@ -343,42 +348,61 @@ export const VisualChartsRow: React.FC<VisualChartsRowProps> = ({ data }) => {
               cy="96"
               r={donutRadius}
               fill="transparent"
-              stroke="#64748B"
+              stroke="#94A3B8"
               strokeWidth="22"
               strokeDasharray={`${segPend} ${donutCircumference}`}
               strokeDashoffset={-(segPass + segWarn + segFail)}
             />
+            {/* N/A Segment */}
+            {segNa > 0 && (
+              <circle
+                cx="96"
+                cy="96"
+                r={donutRadius}
+                fill="transparent"
+                stroke="#CBD5E1"
+                strokeWidth="22"
+                strokeDasharray={`${segNa} ${donutCircumference}`}
+                strokeDashoffset={-(segPass + segWarn + segFail + segPend)}
+              />
+            )}
           </svg>
 
           {/* Center Info */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-3xl font-mono font-extrabold text-slate-100">
+            <span className="text-3xl font-mono font-extrabold text-slate-900 dark:text-slate-100">
               54
             </span>
-            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">
               Total Checks
             </span>
           </div>
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center justify-center gap-2.5 text-[11px] pt-2 border-t border-slate-800/80 w-full font-mono">
+        <div className="flex flex-wrap items-center justify-center gap-2.5 text-[11px] pt-2 border-t border-slate-200/80 dark:border-slate-800/80 w-full font-mono">
           <div className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />
-            <span className="text-slate-300">Pass ({scoring.statusCounts.pass})</span>
+            <span className="text-slate-700 dark:text-slate-300">Pass ({scoring.statusCounts.pass})</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block" />
-            <span className="text-slate-300">Warning ({scoring.statusCounts.warning})</span>
+            <span className="text-slate-700 dark:text-slate-300">Warning ({scoring.statusCounts.warning})</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block" />
-            <span className="text-slate-300">Fail ({scoring.statusCounts.fail})</span>
+            <span className="text-slate-700 dark:text-slate-300">Fail ({scoring.statusCounts.fail})</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-sm bg-slate-500 inline-block" />
-            <span className="text-slate-300">Pending ({scoring.statusCounts.pending})</span>
+            <span className="w-2.5 h-2.5 rounded-sm bg-slate-400 inline-block" />
+            <span className="text-slate-700 dark:text-slate-300">Pending ({scoring.statusCounts.pending})</span>
           </div>
+          {scoring.statusCounts.na > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-sm bg-slate-300 dark:bg-slate-600 inline-block" />
+              <span className="text-slate-600 dark:text-slate-400">N/A ({scoring.statusCounts.na})</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

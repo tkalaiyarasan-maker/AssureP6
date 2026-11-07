@@ -72,24 +72,24 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/75 backdrop-blur-sm p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden my-8"
+        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden my-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-950/40">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
           <div className="flex items-center gap-2.5">
-            <UploadCloud className="w-5 h-5 text-amber-400" />
-            <h2 className="text-base font-bold text-slate-100">
+            <UploadCloud className="w-5 h-5 text-amber-500" />
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
               Open Primavera P6 (.XER) File
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -104,8 +104,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3 ${
               isDragging
-                ? 'border-amber-400 bg-amber-500/10'
-                : 'border-slate-700/80 hover:border-slate-500 bg-slate-950/60'
+                ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10'
+                : 'border-slate-300 dark:border-slate-700/80 hover:border-amber-500 dark:hover:border-slate-500 bg-slate-50/50 dark:bg-slate-950/60'
             }`}
           >
             <input
@@ -119,22 +119,22 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                 }
               }}
             />
-            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-amber-400">
+            <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-slate-800 flex items-center justify-center text-amber-600 dark:text-amber-400">
               <FileCode className="w-6 h-6" />
             </div>
 
             <div>
-              <p className="text-sm font-semibold text-slate-200">
-                Click to browse or drag and drop your <span className="text-amber-400">.xer</span> file here
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                Click to browse or drag and drop your <span className="text-amber-600 dark:text-amber-400 font-bold">.xer</span> file here
               </p>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Parsed entirely client-side in your browser. No files are uploaded to any external server.
               </p>
             </div>
           </div>
 
           {uploadError && (
-            <div className="p-3 bg-rose-950/60 border border-rose-800/80 rounded-lg text-xs text-rose-300 flex items-center gap-2">
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 rounded-lg text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{uploadError}</span>
             </div>
@@ -143,7 +143,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
           {/* Preset Sample Projects Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Or Load a Real Primavera P6 Sample Project
               </span>
             </div>
@@ -156,24 +156,24 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                     onSelectSample(sample);
                     onClose();
                   }}
-                  className="p-3.5 bg-slate-950 border border-slate-800 hover:border-amber-500/50 rounded-xl cursor-pointer transition-all flex items-center justify-between group"
+                  className="p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-amber-500/60 hover:bg-amber-50/30 dark:hover:bg-slate-900 rounded-xl cursor-pointer transition-all flex items-center justify-between group"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">
+                      <span className="font-mono text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 font-semibold">
                         {sample.code}
                       </span>
-                      <span className="text-xs text-slate-400 font-medium">{sample.category}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{sample.category}</span>
                     </div>
-                    <h3 className="text-xs font-bold text-slate-100 group-hover:text-amber-300 transition-colors">
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors">
                       {sample.name}
                     </h3>
-                    <p className="text-[11px] text-slate-400 line-clamp-1">{sample.description}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">{sample.description}</p>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0 text-xs font-mono text-slate-400 ml-4">
+                  <div className="flex items-center gap-3 shrink-0 text-xs font-mono text-slate-500 dark:text-slate-400 ml-4">
                     <span>{sample.activityCount} tasks</span>
-                    <span className="text-amber-400 flex items-center gap-1 font-sans font-medium text-xs group-hover:translate-x-0.5 transition-transform">
+                    <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 font-sans font-semibold text-xs group-hover:translate-x-0.5 transition-transform">
                       Load &rarr;
                     </span>
                   </div>
@@ -184,11 +184,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between text-xs text-slate-500">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between text-xs text-slate-500">
           <span>Supported format: Oracle Primavera P6 XER (v8.0 to v24.12)</span>
           <button
             onClick={onClose}
-            className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors font-medium"
+            className="px-3.5 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition-colors font-medium"
           >
             Cancel
           </button>
