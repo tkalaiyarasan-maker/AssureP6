@@ -270,6 +270,7 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
         totalAssignedUnits: 0,
         totalCost: 0,
         assignedActivitiesCount: 0,
+        parentId: rec['parent_rsrc_id'] || undefined,
       };
       resources.push(rsrc);
       rsrcMap.set(rsrcId, rsrc);

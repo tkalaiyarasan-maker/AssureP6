@@ -138,6 +138,7 @@ export interface Resource {
   totalAssignedUnits: number;
   totalCost: number;
   assignedActivitiesCount: number;
+  parentId?: string;
 }
 
 export interface Calendar {
