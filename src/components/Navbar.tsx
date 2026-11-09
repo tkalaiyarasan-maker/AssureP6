@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { SampleProjectInfo, SAMPLE_PROJECTS } from '../data/sampleXerData';
 
-export type ActiveTab = 'healthDashboard' | 'gantt' | 'activities' | 'wbs' | 'dcma' | 'resources' | 'raw';
+export type ActiveTab = 'healthDashboard' | 'gantt' | 'resourceGantt' | 'activities' | 'wbs' | 'dcma' | 'resources' | 'raw';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -69,6 +69,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           }`}
         >
           Gantt Timeline
+        </button>
+        <button
+          onClick={() => onTabChange('resourceGantt')}
+          className={`px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0 transition-colors ${
+            activeTab === 'resourceGantt'
+              ? 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100 shadow-sm font-semibold'
+              : 'hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/40'
+          }`}
+        >
+          Resource Assignments
         </button>
         <button
           onClick={() => onTabChange('activities')}

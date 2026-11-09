@@ -1473,6 +1473,54 @@ export const MAHSR_DASHBOARD_DATA: P6HealthCheckDashboardData = {
       { id: '20', code: 'C4-1200', name: 'Activity C4-1200', totalFloat: 15, remainingDuration: 620, isCritical: false },
     ],
   },
+
+  insights: {
+    logicAnalysis: [
+      { category: 'Logic Analysis', kpi: 'Total Relationships', unit: 'Count', value: 13094, formula: 'Total Relationships from P6', status: 'healthy' },
+      { category: 'Logic Analysis', kpi: 'FS Relationships', unit: 'Count', value: 10605, formula: 'Finish-to-Start ties', status: 'healthy' },
+      { category: 'Logic Analysis', kpi: 'SS Relationships', unit: 'Count', value: 1855, formula: 'Start-to-Start ties', status: 'neutral' },
+      { category: 'Logic Analysis', kpi: 'FF Relationships', unit: 'Count', value: 633, formula: 'Finish-to-Finish ties', status: 'neutral' },
+      { category: 'Logic Analysis', kpi: 'SF Relationships', unit: 'Count', value: 1, formula: 'Start-to-Finish ties (avoid)', status: 'warning' },
+      { category: 'Logic Analysis', kpi: 'SS Closure of Loop', unit: '%', value: '34.1%', formula: '(FF Links / SS Links) * 100', status: 'warning' },
+      { category: 'Logic Analysis', kpi: 'Average Relationship Density', unit: 'Ratio', value: '2.15', formula: 'Total Relationships ÷ Total Activities', status: 'healthy' },
+      { category: 'Logic Analysis', kpi: 'Lag Relationships %', unit: '%', value: '18.2%', formula: 'Relationships with Lag ÷ Total Relationships * 100', status: 'critical' },
+    ],
+    durationAnalysis: [
+      { category: 'Duration Analysis', kpi: 'Long Duration Activities', unit: 'Count', value: 3063, formula: 'Duration > 44 Working Days', status: 'critical' },
+      { category: 'Duration Analysis', kpi: 'Very Long Duration Activities', unit: 'Count', value: 742, formula: 'Duration > 88 Working Days', status: 'critical' },
+      { category: 'Duration Analysis', kpi: 'Short Duration Activities', unit: 'Count', value: 97, formula: 'Duration < 5 Days', status: 'healthy' },
+      { category: 'Duration Analysis', kpi: 'Negative and Zero Float Activities', unit: 'Count', value: 1343, formula: 'Float <= 0 Days', status: 'neutral' },
+      { category: 'Duration Analysis', kpi: 'High Positive Float Activities', unit: 'Count', value: 2401, formula: 'Float > 44 Days', status: 'critical' },
+    ],
+    constraintsAnalysis: [
+      { category: 'Constraints Analysis', kpi: 'Hard Constraints', unit: 'Count', value: 0, formula: 'Mandatory Start + Mandatory Finish Activities', status: 'healthy' },
+      { category: 'Constraints Analysis', kpi: 'Soft Constraints', unit: 'Count', value: 25, formula: 'Soft constraints count', status: 'healthy' },
+      { category: 'Constraints Analysis', kpi: 'Total Constraints', unit: 'Count', value: 25, formula: 'Total Constrained Activities', status: 'healthy' },
+      { category: 'Constraints Analysis', kpi: 'Constraint Percentage', unit: '%', value: '0.4%', formula: 'Constrained Activities ÷ Total Activities * 100', status: 'healthy' },
+    ],
+    wbsQuality: [
+      { category: 'WBS & Activity Quality', kpi: 'Number of WBS Levels', unit: 'Count', value: 6, formula: 'Maximum WBS Depth', status: 'healthy' },
+      { category: 'WBS & Activity Quality', kpi: 'Duplicate WBS Names', unit: 'Count', value: 0, formula: 'Count of WBS with same name', status: 'healthy' },
+      { category: 'WBS & Activity Quality', kpi: 'Duplicate Activity Names', unit: 'Count', value: 0, formula: 'Count of activities with same name', status: 'healthy' },
+      { category: 'WBS & Activity Quality', kpi: 'Activities Without WBS', unit: 'Count', value: 0, formula: 'Activities missing WBS assignment', status: 'healthy' },
+      { category: 'WBS & Activity Quality', kpi: 'Empty WBS Nodes', unit: 'Count', value: 0, formula: 'Leaf WBS nodes with zero activities', status: 'healthy' },
+    ],
+    resourceAnalysis: [
+      { category: 'Resource Analysis', kpi: 'Labor Resources', unit: 'Count', value: 163, formula: 'Labor resources defined in P6', status: 'healthy' },
+      { category: 'Resource Analysis', kpi: 'Non-Labor Resources', unit: 'Count', value: 29, formula: 'Equipment & non-labor resources', status: 'healthy' },
+      { category: 'Resource Analysis', kpi: 'Material Resources', unit: 'Count', value: 239, formula: 'Material resource catalog', status: 'healthy' },
+      { category: 'Resource Analysis', kpi: 'Total Resource Assignments', unit: 'Count', value: 24189, formula: 'Total activity resource assignments', status: 'healthy' },
+      { category: 'Resource Analysis', kpi: 'Overallocated Resources', unit: 'Count', value: 0, formula: 'Resources exceeding limit in any period', status: 'healthy' },
+    ],
+    calendarAnalysis: [
+      { category: 'Calendar Analysis', kpi: 'Project Calendars', unit: 'Count', value: 0, formula: 'Calendars scoped to project', status: 'neutral' },
+      { category: 'Calendar Analysis', kpi: 'Global Calendars', unit: 'Count', value: 6, formula: 'Global enterprise calendars', status: 'healthy' },
+      { category: 'Calendar Analysis', kpi: 'Resource Calendars', unit: 'Count', value: 0, formula: 'Resource-specific calendars', status: 'neutral' },
+      { category: 'Calendar Analysis', kpi: 'Activities on Project Calendar', unit: 'Count', value: 0, formula: 'Activities using project calendars', status: 'neutral' },
+      { category: 'Calendar Analysis', kpi: 'Activities on Global Calendar', unit: 'Count', value: 6078, formula: 'Activities using global calendars', status: 'healthy' },
+      { category: 'Calendar Analysis', kpi: 'Activities on Resource Calendar', unit: 'Count', value: 0, formula: 'Activities using resource calendars', status: 'neutral' },
+    ],
+  },
 };
 
 // Sort rankedDeficiencies by largest units lost first

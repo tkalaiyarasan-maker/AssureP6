@@ -377,13 +377,12 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
       else if (rec['task_type'] === 'TT_LOE') type = 'TT_LOE';
       else if (rec['task_type'] === 'TT_WBS') type = 'TT_WBS';
 
-      // Duration in days (from hours)
-      const targetHours = parseFloat(rec['target_drtn_hr_cnt'] || '0') || 0;
-      const remainHours = parseFloat(rec['remain_drtn_hr_cnt'] || '0') || 0;
-      const actHours = parseFloat(rec['act_work_qty'] || '0') || 0;
-      const origDurationDays = Math.round((targetHours / 8) * 10) / 10;
-      const remainDurationDays = Math.round((remainHours / 8) * 10) / 10;
-      const actualDurationDays = Math.round((actHours / 8) * 10) / 10;
+      const isMilestone = type === 'TT_Mile' || type === 'TT_FinMile';
+
+      // Calendar
+      const calId = rec['clndr_id'];
+      const cal = clndrMap.get(calId);
+      const hoursPerDay = cal && cal.hoursPerDay > 0 ? cal.hoursPerDay : 8.0;
 
       // Dates
       const startDate = normalizeDate(rec['act_start_date'] || rec['target_start_date'] || rec['early_start_date']);
@@ -397,23 +396,67 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
       const targetStartDate = normalizeDate(rec['target_start_date']);
       const targetFinishDate = normalizeDate(rec['target_end_date']);
 
-      // Float
-      const totalFloatHours = parseFloat(rec['total_float_hr_cnt'] || '0') || 0;
-      const freeFloatHours = parseFloat(rec['free_float_hr_cnt'] || '0') || 0;
-      const totalFloatDays = Math.round((totalFloatHours / 8) * 10) / 10;
-      const freeFloatDays = Math.round((freeFloatHours / 8) * 10) / 10;
+      // Duration in days (from hours, accurately divided by assigned calendar's hours per day)
+      const rawTargetHours = parseFloat(rec['target_drtn_hr_cnt'] || '0') || 0;
+      const rawRemainHours = parseFloat(rec['remain_drtn_hr_cnt'] || '0') || 0;
+      const rawActWorkQty = parseFloat(rec['act_work_qty'] || '0') || 0;
+      const rawActDrtnHours = parseFloat(rec['act_drtn_hr_cnt'] || '0') || 0;
 
-      // Critical path condition: total float <= 0 or critical path flag
-      const isCritical = totalFloatDays <= 0 && status !== 'TK_Complete';
+      let origDurationDays = 0;
+      let remainDurationDays = 0;
+      let actualDurationDays = 0;
+
+      if (!isMilestone) {
+        if (rawTargetHours > 0) {
+          origDurationDays = Math.round((rawTargetHours / hoursPerDay) * 10) / 10;
+        } else if (rawRemainHours > 0) {
+          origDurationDays = Math.round((rawRemainHours / hoursPerDay) * 10) / 10;
+        } else if (startDate && finishDate) {
+          const sDate = new Date(startDate);
+          const fDate = new Date(finishDate);
+          const diffDays = Math.max(1, Math.round((fDate.getTime() - sDate.getTime()) / (1000 * 3600 * 24)));
+          origDurationDays = diffDays;
+        }
+
+        if (status === 'TK_Complete') {
+          remainDurationDays = 0;
+          actualDurationDays = rawActDrtnHours > 0
+            ? Math.round((rawActDrtnHours / hoursPerDay) * 10) / 10
+            : origDurationDays;
+        } else if (status === 'TK_Active') {
+          remainDurationDays = rawRemainHours > 0
+            ? Math.round((rawRemainHours / hoursPerDay) * 10) / 10
+            : origDurationDays;
+          actualDurationDays = rawActDrtnHours > 0
+            ? Math.round((rawActDrtnHours / hoursPerDay) * 10) / 10
+            : Math.max(0, origDurationDays - remainDurationDays);
+        } else {
+          // TK_NotStart
+          remainDurationDays = origDurationDays;
+          actualDurationDays = 0;
+        }
+      }
+
+      // Float (in days, divided by assigned calendar's hours per day)
+      const rawTf = rec['total_float_hr_cnt'];
+      const rawFf = rec['free_float_hr_cnt'];
+      let totalFloatDays = 0;
+      let freeFloatDays = 0;
+
+      if (rawTf !== undefined && rawTf !== '') {
+        totalFloatDays = Math.round((parseFloat(rawTf) / hoursPerDay) * 10) / 10;
+      }
+      if (rawFf !== undefined && rawFf !== '') {
+        freeFloatDays = Math.round((parseFloat(rawFf) / hoursPerDay) * 10) / 10;
+      }
+
+      // Critical path condition: incomplete activities with totalFloatDays <= 0
+      const isCritical = status !== 'TK_Complete' && totalFloatDays <= 0;
 
       // Progress %
       let physCompletePct = parseFloat(rec['phys_complete_pct'] || '0') || 0;
       if (status === 'TK_Complete') physCompletePct = 100;
       if (status === 'TK_NotStart') physCompletePct = 0;
-
-      // Calendar
-      const calId = rec['clndr_id'];
-      const cal = clndrMap.get(calId);
 
       const activity: Activity = {
         id,
@@ -495,6 +538,64 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
         predTaskName: succTask ? succTask.name : undefined,
       };
     });
+  }
+
+  // Longest Path determination (Oracle Primavera standard)
+  let latestProjFinish = '';
+  for (const a of activities) {
+    if (a.finishDate && (!latestProjFinish || a.finishDate > latestProjFinish)) {
+      latestProjFinish = a.finishDate;
+    }
+  }
+
+  // Find candidate terminal activities finishing at or within 2 days of latest finish
+  const terminalCandidates = activities.filter(
+    (a) =>
+      a.finishDate &&
+      (a.successors.length === 0 || a.type === 'TT_FinMile') &&
+      Math.abs(new Date(a.finishDate).getTime() - new Date(latestProjFinish).getTime()) <= 86400000 * 2
+  );
+
+  const longestPathSet = new Set<string>();
+  const traceQueue: string[] = (terminalCandidates.length > 0 ? terminalCandidates : activities.slice(0, 1)).map(
+    (a) => a.id
+  );
+  const visitedTrace = new Set<string>();
+
+  while (traceQueue.length > 0) {
+    const curId = traceQueue.shift()!;
+    if (visitedTrace.has(curId)) continue;
+    visitedTrace.add(curId);
+    longestPathSet.add(curId);
+
+    const act = taskMap.get(curId);
+    if (!act || act.predecessors.length === 0) continue;
+
+    // Check driving predecessors first
+    const drivingPreds = act.predecessors.filter((p) => p.driving);
+    if (drivingPreds.length > 0) {
+      for (const dp of drivingPreds) {
+        if (!visitedTrace.has(dp.predTaskId)) traceQueue.push(dp.predTaskId);
+      }
+    } else {
+      // Trace critical or minimum float predecessors
+      let minF = 99999;
+      for (const p of act.predecessors) {
+        const pred = taskMap.get(p.predTaskId);
+        if (pred && pred.totalFloatDays < minF) minF = pred.totalFloatDays;
+      }
+      const bestPreds = act.predecessors.filter((p) => {
+        const pred = taskMap.get(p.predTaskId);
+        return pred && pred.totalFloatDays <= Math.max(0, minF);
+      });
+      for (const bp of bestPreds) {
+        if (!visitedTrace.has(bp.predTaskId)) traceQueue.push(bp.predTaskId);
+      }
+    }
+  }
+
+  for (const act of activities) {
+    act.isLongestPath = longestPathSet.has(act.id);
   }
 
   // Calculate WBS roll-up progress

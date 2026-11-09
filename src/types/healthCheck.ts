@@ -87,6 +87,24 @@ export interface ScatterPoint {
   isCritical: boolean;
 }
 
+export interface ScheduleInsightItem {
+  category: string;
+  kpi: string;
+  unit: string;
+  value: string | number;
+  formula: string;
+  status?: 'healthy' | 'warning' | 'critical' | 'neutral';
+}
+
+export interface ScheduleInsightsData {
+  logicAnalysis: ScheduleInsightItem[];
+  durationAnalysis: ScheduleInsightItem[];
+  constraintsAnalysis: ScheduleInsightItem[];
+  wbsQuality: ScheduleInsightItem[];
+  resourceAnalysis: ScheduleInsightItem[];
+  calendarAnalysis: ScheduleInsightItem[];
+}
+
 export interface P6HealthCheckDashboardData {
   projectDetails: {
     projectName: string;
@@ -172,4 +190,6 @@ export interface P6HealthCheckDashboardData {
     calendarAssignmentBreakdown: CalendarSummaryItem[];
     scatterPlotPoints: ScatterPoint[];
   };
+
+  insights: ScheduleInsightsData;
 }

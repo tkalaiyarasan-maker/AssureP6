@@ -19,11 +19,11 @@ export const ExecutiveScoreCards: React.FC<ExecutiveScoreCardsProps> = ({ data }
         </span>
         <div className="my-2">
           <span className="text-2xl lg:text-3xl font-mono font-bold text-blue-600 dark:text-sky-400 tabular-nums">
-            {scoring.criteriaAScorePct.toFixed(1)}%
+            {Math.min(100.0, scoring.criteriaAScorePct).toFixed(1)}%
           </span>
         </div>
         <span className="text-[11px] font-mono text-slate-600 dark:text-slate-500">
-          {scoring.criteriaAUnitsEarned.toFixed(1)} of {scoring.criteriaAUnitsAllotted.toFixed(1)} units
+          {Math.min(scoring.criteriaAUnitsAllotted, scoring.criteriaAUnitsEarned).toFixed(1)} of {scoring.criteriaAUnitsAllotted.toFixed(1)} units
         </span>
       </div>
 
@@ -34,11 +34,11 @@ export const ExecutiveScoreCards: React.FC<ExecutiveScoreCardsProps> = ({ data }
         </span>
         <div className="my-2">
           <span className="text-2xl lg:text-3xl font-mono font-bold text-blue-600 dark:text-sky-400 tabular-nums">
-            {scoring.criteriaBScorePct.toFixed(1)}%
+            {Math.min(100.0, scoring.criteriaBScorePct).toFixed(1)}%
           </span>
         </div>
         <span className="text-[11px] font-mono text-slate-600 dark:text-slate-500">
-          {scoring.criteriaBUnitsEarned.toFixed(1)} of {scoring.criteriaBUnitsAllotted.toFixed(1)} applicable units
+          {Math.min(scoring.criteriaBUnitsAllotted, scoring.criteriaBUnitsEarned).toFixed(1)} of {scoring.criteriaBUnitsAllotted.toFixed(1)} applicable units
         </span>
       </div>
 

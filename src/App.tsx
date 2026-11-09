@@ -11,6 +11,7 @@ import { evaluateP6ProgrammeHealth } from './utils/healthCheckEvaluator';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { ProjectSummaryHeader } from './components/ProjectSummaryHeader';
 import { P6HealthCheckDashboard } from './components/dashboard/P6HealthCheckDashboard';
+import { ResourceAssignmentGantt } from './components/ResourceAssignmentGantt';
 import { GanttChart } from './components/GanttChart';
 import { ActivitySheet } from './components/ActivitySheet';
 import { WbsHierarchy } from './components/WbsHierarchy';
@@ -48,8 +49,31 @@ export default function App() {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  // Parse initial default project: MAHSR C4 - CWP Baseline (the reference project from the user's framework)
+  // State tracking whether the currently displayed project is a bundled demo/sample or user-uploaded
+  const [isSampleActive, setIsSampleActive] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('p6_is_user_uploaded');
+      if (saved === 'true') return false;
+    }
+    return true;
+  });
+
+  // Project revision timestamp to force full re-initialization of all views on upload
+  const [projectRev, setProjectRev] = useState<number>(() => Date.now());
+
+  // Parse initial project: load saved user XER if present, otherwise default to reference sample
   const [project, setProject] = useState<ParsedProject>(() => {
+    if (typeof window !== 'undefined') {
+      const savedXer = sessionStorage.getItem('p6_uploaded_xer');
+      const savedName = sessionStorage.getItem('p6_uploaded_name') || 'Project.xer';
+      if (savedXer) {
+        try {
+          return parseXerProject(savedXer, savedName);
+        } catch {
+          // fallback to sample if saved parsing fails
+        }
+      }
+    }
     return parseXerProject(SAMPLE_PROJECT_MAHSR, 'MAHSR-C4.xer');
   });
 
@@ -57,16 +81,25 @@ export default function App() {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 
-  // Dynamically compute the 54-parameter L&T health check dashboard data for the active project
+  // Dynamically compute the 54-parameter health check dashboard data for the active project
   const healthDashboardData = useMemo(() => {
     return evaluateP6ProgrammeHealth(project);
   }, [project]);
 
-  // Load custom XER content
+  // Load custom XER content and cleanly reset all application states
   const handleLoadXerContent = (content: string, fileName: string) => {
     try {
       const parsed = parseXerProject(content, fileName);
       setProject(parsed);
+      setIsSampleActive(false);
+      setProjectRev(Date.now());
+      try {
+        sessionStorage.setItem('p6_uploaded_xer', content);
+        sessionStorage.setItem('p6_uploaded_name', fileName);
+        sessionStorage.setItem('p6_is_user_uploaded', 'true');
+      } catch {
+        // ignore storage quota issues
+      }
       setSelectedActivity(null);
       setActiveTab('healthDashboard');
     } catch (err) {
@@ -74,11 +107,20 @@ export default function App() {
     }
   };
 
-  // Load sample project
+  // Load sample project and reset states
   const handleSelectSample = (sample: SampleProjectInfo) => {
     try {
       const parsed = parseXerProject(sample.xerContent, `${sample.code}.xer`);
       setProject(parsed);
+      setIsSampleActive(true);
+      setProjectRev(Date.now());
+      try {
+        sessionStorage.removeItem('p6_uploaded_xer');
+        sessionStorage.removeItem('p6_uploaded_name');
+        sessionStorage.setItem('p6_is_user_uploaded', 'false');
+      } catch {
+        // ignore
+      }
       setSelectedActivity(null);
       setActiveTab('healthDashboard');
     } catch (err) {
@@ -121,10 +163,12 @@ export default function App() {
       <ProjectSummaryHeader
         project={project}
         onNavigateToTab={setActiveTab}
+        isSampleActive={isSampleActive}
+        onOpenUpload={() => setIsUploadModalOpen(true)}
       />
 
-      {/* Main Workspace Viewport */}
-      <main className="flex-1 p-4 lg:p-6 overflow-hidden">
+      {/* Main Workspace Viewport keyed by project revision for clean refresh */}
+      <main key={`proj_${project.metadata.code}_${projectRev}`} className="flex-1 p-4 lg:p-6 overflow-hidden">
         {activeTab === 'healthDashboard' && (
           <P6HealthCheckDashboard
             data={healthDashboardData}
@@ -133,6 +177,14 @@ export default function App() {
 
         {activeTab === 'gantt' && (
           <GanttChart
+            project={project}
+            onSelectActivity={setSelectedActivity}
+            selectedActivityId={selectedActivity?.id}
+          />
+        )}
+
+        {activeTab === 'resourceGantt' && (
+          <ResourceAssignmentGantt
             project={project}
             onSelectActivity={setSelectedActivity}
             selectedActivityId={selectedActivity?.id}

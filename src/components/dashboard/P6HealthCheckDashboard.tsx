@@ -6,28 +6,34 @@ import { ProjectMetaAndCounts } from './ProjectMetaAndCounts';
 import { VisualChartsRow } from './VisualChartsRow';
 import { StatisticalDistributionsRow } from './StatisticalDistributionsRow';
 import { DetailedScoringTable } from './DetailedScoringTable';
+import { ExecutiveInsightsGrid } from './ExecutiveInsightsGrid';
 import {
   LayoutDashboard,
   Table as TableIcon,
   BarChart3,
   Award,
   ListOrdered,
-  FileSpreadsheet,
+  Printer,
+  Sparkles,
 } from 'lucide-react';
 
 interface P6HealthCheckDashboardProps {
   data: P6HealthCheckDashboardData;
 }
 
-type DashboardSubTab = 'overview' | 'distributions' | 'checklist' | 'ranked';
+type DashboardSubTab = 'overview' | 'insights' | 'distributions' | 'checklist' | 'ranked';
 
 export const P6HealthCheckDashboard: React.FC<P6HealthCheckDashboardProps> = ({ data }) => {
   const [subTab, setSubTab] = useState<DashboardSubTab>('overview');
 
+  const handlePrintPdf = () => {
+    window.print();
+  };
+
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-lg transition-colors">
+    <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-lg transition-colors print:border-none print:h-auto print:shadow-none">
       {/* 1. Master Header Title Banner (Executive Navy Banner matching reference image P61.png) */}
-      <div className="px-6 py-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+      <div className="px-6 py-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-3 shadow-sm print:bg-slate-900 print:text-white">
         <div className="flex items-center gap-3">
           <Award className="w-5 h-5 text-amber-400" />
           <h1 className="text-base font-extrabold tracking-wide uppercase text-white">
@@ -35,51 +41,74 @@ export const P6HealthCheckDashboard: React.FC<P6HealthCheckDashboardProps> = ({ 
           </h1>
         </div>
 
-        {/* Sub-view Navigation Tabs */}
-        <div className="flex items-center p-0.5 bg-slate-950/80 border border-slate-700 rounded-lg text-xs font-medium">
+        {/* Sub-view Navigation Tabs & PDF Export CTA */}
+        <div className="flex items-center gap-2 print:hidden">
+          <div className="flex items-center p-0.5 bg-slate-950/80 border border-slate-700 rounded-lg text-xs font-medium">
+            <button
+              onClick={() => setSubTab('overview')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                subTab === 'overview'
+                  ? 'bg-slate-800 text-white shadow'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-sky-400" />
+              Executive Overview
+            </button>
+            <button
+              onClick={() => setSubTab('insights')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                subTab === 'insights'
+                  ? 'bg-slate-800 text-white shadow'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              Schedule Insights (6 Categories)
+            </button>
+            <button
+              onClick={() => setSubTab('distributions')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                subTab === 'distributions'
+                  ? 'bg-slate-800 text-white shadow'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+              Histograms &amp; Scatter Plot
+            </button>
+            <button
+              onClick={() => setSubTab('checklist')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                subTab === 'checklist'
+                  ? 'bg-slate-800 text-white shadow'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <TableIcon className="w-3.5 h-3.5 text-amber-400" />
+              54-Parameter Checklist
+            </button>
+            <button
+              onClick={() => setSubTab('ranked')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                subTab === 'ranked'
+                  ? 'bg-slate-800 text-white shadow'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <ListOrdered className="w-3.5 h-3.5 text-rose-400" />
+              Ranked Deficiencies ({data.rankedDeficiencies.length})
+            </button>
+          </div>
+
+          {/* Download PDF / Print Report Button */}
           <button
-            onClick={() => setSubTab('overview')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
-              subTab === 'overview'
-                ? 'bg-slate-800 text-white shadow'
-                : 'text-slate-300 hover:text-white'
-            }`}
+            onClick={handlePrintPdf}
+            title="Download or Print Executive Health Check PDF Report"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-sm transition-all"
           >
-            <LayoutDashboard className="w-3.5 h-3.5 text-sky-400" />
-            Executive Overview
-          </button>
-          <button
-            onClick={() => setSubTab('distributions')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
-              subTab === 'distributions'
-                ? 'bg-slate-800 text-white shadow'
-                : 'text-slate-300 hover:text-white'
-            }`}
-          >
-            <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
-            Histograms &amp; Scatter Plot
-          </button>
-          <button
-            onClick={() => setSubTab('checklist')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
-              subTab === 'checklist'
-                ? 'bg-slate-800 text-white shadow'
-                : 'text-slate-300 hover:text-white'
-            }`}
-          >
-            <TableIcon className="w-3.5 h-3.5 text-amber-400" />
-            54-Parameter Checklist
-          </button>
-          <button
-            onClick={() => setSubTab('ranked')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
-              subTab === 'ranked'
-                ? 'bg-slate-800 text-white shadow'
-                : 'text-slate-300 hover:text-white'
-            }`}
-          >
-            <ListOrdered className="w-3.5 h-3.5 text-rose-400" />
-            Ranked Deficiencies ({data.rankedDeficiencies.length})
+            <Printer className="w-3.5 h-3.5 text-slate-950" />
+            <span>Download PDF</span>
           </button>
         </div>
       </div>
@@ -101,8 +130,17 @@ export const P6HealthCheckDashboard: React.FC<P6HealthCheckDashboardProps> = ({ 
             {/* Visual Charts: Radar + 2 Donut Charts */}
             <VisualChartsRow data={data} />
 
+            {/* Baseline Evaluation Insights & KPI Metrics */}
+            <ExecutiveInsightsGrid insights={data.insights} />
+
             {/* Core Histograms & Scatter Plot Preview */}
             <StatisticalDistributionsRow data={data} />
+          </div>
+        )}
+
+        {subTab === 'insights' && (
+          <div>
+            <ExecutiveInsightsGrid insights={data.insights} />
           </div>
         )}
 

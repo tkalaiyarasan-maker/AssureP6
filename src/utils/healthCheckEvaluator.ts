@@ -6,6 +6,7 @@ import {
   ThemeSummary,
   RangeBucket,
   ScatterPoint,
+  ScheduleInsightsData,
 } from '../types/healthCheck';
 import { MAHSR_DASHBOARD_DATA } from '../data/mahsrReferenceData';
 
@@ -13,11 +14,6 @@ import { MAHSR_DASHBOARD_DATA } from '../data/mahsrReferenceData';
  * Evaluates any parsed Primavera P6 project against the complete 54-Parameter Health Check Framework
  */
 export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheckDashboardData {
-  // If the project code matches MAHSR C4, return the pre-calculated reference directly
-  if (project.metadata.code.includes('MAHSR') || project.metadata.name.includes('MAHSR')) {
-    return MAHSR_DASHBOARD_DATA;
-  }
-
   const activities = project.activities;
   const relationships = project.relationships;
   const totalActs = activities.length || 1;
@@ -49,6 +45,8 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
   // Weight factor: Critical = 2.0 (1.82 units), General = 1.0 (0.91 units)
   const params: HealthCheckParameter[] = [];
 
+  // Criteria A: 15 parameters (7 Critical, 8 General)
+  // Total weight: 7 * 2.0 + 8 * 1.0 = 22.0. Exact share of 20.0 units.
   const addParamA = (
     id: string,
     parameter: string,
@@ -60,11 +58,12 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
     passRule: string
   ) => {
     const weight = criticalKey ? 2.0 : 1.0;
-    const budget = criticalKey ? 1.82 : 0.91;
+    const exactBudget = (weight / 22.0) * 20.0; // exact unrounded weight share
+    const budget = Math.round(exactBudget * 100) / 100; // 1.82 for critical, 0.91 for general for display
     const status = isCompliant ? 'Pass' : 'Fail';
     const scorePct = isCompliant ? 100 : 0;
-    const earned = isCompliant ? budget : 0;
-    const lost = budget - earned;
+    const earned = isCompliant ? exactBudget : 0;
+    const lost = exactBudget - earned;
     const action = isCompliant ? 'OK' : criticalKey ? 'RECHECK & RESUBMIT' : 'Review & improve';
 
     params.push({
@@ -83,8 +82,8 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
       limitStr: '—',
       status,
       scorePct,
-      unitsEarned: earned,
-      unitsLost: lost,
+      unitsEarned: Math.round(earned * 100) / 100,
+      unitsLost: Math.round(lost * 100) / 100,
       action,
       resultText: String(actual),
       passRule,
@@ -128,7 +127,9 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
     affectedActs: Activity[] = []
   ) => {
     const weight = criticalKey ? 2.0 : 1.0;
-    const budget = criticalKey ? 3.08 : 1.54;
+    // Exactly 80.0 units shared by weight: 13 * 2.0 + 26 * 1.0 = 52.0
+    const exactBudget = (weight / 52.0) * 80.0;
+    const budget = Math.round(exactBudget * 100) / 100; // 3.08 for critical, 1.54 for general for display
 
     const actualRatio = baseCount > 0 ? (actualCount / baseCount) * 100 : 0;
     const isRatio = targetStr.includes('%');
@@ -146,8 +147,8 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
     }
 
     const scorePct = status === 'Pass' ? 100 : status === 'Warning' ? 50 : 0;
-    const earned = Math.round(budget * (scorePct / 100) * 100) / 100;
-    const lost = Math.round((budget - earned) * 100) / 100;
+    const earned = exactBudget * (scorePct / 100);
+    const lost = exactBudget - earned;
     const action = status === 'Pass' ? 'OK' : criticalKey ? 'RECHECK & RESUBMIT' : 'Review & improve';
 
     const resultStr = isRatio ? `${actualRatio.toFixed(1)}%` : String(actualCount);
@@ -168,8 +169,8 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
       limitStr,
       status,
       scorePct,
-      unitsEarned: earned,
-      unitsLost: lost,
+      unitsEarned: Math.round(earned * 100) / 100,
+      unitsLost: Math.round(lost * 100) / 100,
       action,
       resultText: resultStr,
       passRule,
@@ -242,10 +243,23 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
   const criteriaAParams = params.filter((p) => p.cat === 'A');
   const criteriaBParams = params.filter((p) => p.cat === 'B');
 
-  const criteriaAEarned = criteriaAParams.reduce((sum, p) => sum + p.unitsEarned, 0);
-  const criteriaBEarned = criteriaBParams.reduce((sum, p) => sum + p.unitsEarned, 0);
-  const totalEarned = Math.round((criteriaAEarned + criteriaBEarned) * 100) / 100;
-  const overallScorePct = Math.round((totalEarned / 100) * 1000) / 10;
+  const criteriaAAllotted = 20.0;
+  const criteriaBAllotted = 80.0;
+
+  const rawAEarned = criteriaAParams.reduce((sum, p) => sum + p.unitsEarned, 0);
+  const rawBEarned = criteriaBParams.reduce((sum, p) => sum + p.unitsEarned, 0);
+
+  const cleanCriteriaAEarned = Math.min(criteriaAAllotted, Math.round(rawAEarned * 100) / 100);
+  const cleanCriteriaBEarned = Math.min(criteriaBAllotted, Math.round(rawBEarned * 100) / 100);
+  const totalEarned = Math.min(100.0, Math.round((cleanCriteriaAEarned + cleanCriteriaBEarned) * 100) / 100);
+
+  const criteriaAScorePct = criteriaAAllotted > 0
+    ? Math.min(100.0, Math.round((cleanCriteriaAEarned / criteriaAAllotted) * 1000) / 10)
+    : 100.0;
+  const criteriaBScorePct = criteriaBAllotted > 0
+    ? Math.min(100.0, Math.round((cleanCriteriaBEarned / criteriaBAllotted) * 1000) / 10)
+    : 100.0;
+  const overallScorePct = Math.min(100.0, Math.round((totalEarned / 100) * 1000) / 10);
 
   // Critical Gate Check
   const criticalItems = params.filter((p) => p.criticalKey);
@@ -283,9 +297,9 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
   const themes: ThemeSummary[] = themeNames.map((tName) => {
     const tParams = params.filter((p) => p.theme === tName);
     const allotted = Math.round(tParams.reduce((sum, p) => sum + p.budgetUnits, 0) * 100) / 100;
-    const earned = Math.round(tParams.reduce((sum, p) => sum + p.unitsEarned, 0) * 100) / 100;
-    const lost = Math.round((allotted - earned) * 100) / 100;
-    const scorePct = allotted > 0 ? Math.round((earned / allotted) * 100) : 100;
+    const earned = Math.min(allotted, Math.round(tParams.reduce((sum, p) => sum + p.unitsEarned, 0) * 100) / 100);
+    const lost = Math.max(0, Math.round((allotted - earned) * 100) / 100);
+    const scorePct = allotted > 0 ? Math.min(100, Math.round((earned / allotted) * 100)) : 100;
     return {
       theme: tName,
       unitsAllotted: allotted,
@@ -384,6 +398,126 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
     isCritical: a.isCritical,
   }));
 
+  // --- Dynamic Dashboard Insights Computation (User EPC Framework) ---
+  const ssClosureLoopPct = ssRels > 0 ? Math.round((ffRels / ssRels) * 1000) / 10 : 100;
+  const relDensity = Math.round((totalRels / totalActs) * 100) / 100;
+  const lagRelsCount = relationships.filter((r) => r.lagHours !== 0).length;
+  const lagRelsPct = Math.round((lagRelsCount / totalRels) * 1000) / 10;
+
+  const longDurActsCount = activities.filter((a) => a.type === 'TT_Task' && a.origDurationDays > 44).length;
+  const veryLongDurActsCount = activities.filter((a) => a.type === 'TT_Task' && a.origDurationDays > 88).length;
+  const shortDurActsCount = activities.filter((a) => a.type === 'TT_Task' && a.origDurationDays > 0 && a.origDurationDays < 5).length;
+  const negZeroFloatCount = activities.filter((a) => a.status !== 'TK_Complete' && a.totalFloatDays <= 0).length;
+  const highFloatActsCount = activities.filter((a) => a.status !== 'TK_Complete' && a.totalFloatDays > 44).length;
+
+  const hardConstraintsCount = activities.filter((a) =>
+    a.constraintType && ['MAND', 'MUST', 'CS_MAND', 'CS_MSO', 'CS_MEO', 'STARTON', 'FINISHON'].some((k) => a.constraintType!.toUpperCase().includes(k))
+  ).length;
+  const softConstraintsCount = activities.filter((a) =>
+    a.constraintType && !['MAND', 'MUST', 'CS_MAND', 'CS_MSO', 'CS_MEO', 'STARTON', 'FINISHON'].some((k) => a.constraintType!.toUpperCase().includes(k))
+  ).length;
+  const totalConstraintsCount = activities.filter((a) => !!a.constraintType).length;
+  const constraintPct = Math.round((totalConstraintsCount / totalActs) * 1000) / 10;
+
+  const maxWbsDepth = Math.max(0, ...Array.from(project.wbsMap.values()).map((w) => w.level || 0)) + 1;
+  const wbsNameCounts = new Map<string, number>();
+  for (const w of project.wbsMap.values()) {
+    const n = (w.name || '').trim().toLowerCase();
+    if (n) wbsNameCounts.set(n, (wbsNameCounts.get(n) || 0) + 1);
+  }
+  let duplicateWbsCount = 0;
+  for (const count of wbsNameCounts.values()) {
+    if (count > 1) duplicateWbsCount += (count - 1);
+  }
+
+  const actNameCounts = new Map<string, number>();
+  for (const a of activities) {
+    const n = (a.name || '').trim().toLowerCase();
+    if (n) actNameCounts.set(n, (actNameCounts.get(n) || 0) + 1);
+  }
+  let duplicateActCount = 0;
+  for (const count of actNameCounts.values()) {
+    if (count > 1) duplicateActCount += (count - 1);
+  }
+
+  const actsWithoutWbs = activities.filter((a) => !a.wbsId || !project.wbsMap.has(a.wbsId)).length;
+  const emptyWbsNodesCount = Array.from(project.wbsMap.values()).filter((w) => w.children.length === 0 && w.activityCount === 0).length;
+  const totalResourceAssignments = activities.reduce((sum, a) => sum + a.assignments.length, 0);
+
+  const calRecords = project.rawTables.get('CALENDAR')?.records || [];
+  let projCals = 0;
+  let globalCals = 0;
+  let rsrcCals = 0;
+  for (const cr of calRecords) {
+    const t = cr['clndr_type'] || '';
+    if (t === 'CA_Project') projCals++;
+    else if (t === 'CA_Rsrc') rsrcCals++;
+    else globalCals++;
+  }
+  if (globalCals === 0 && projCals === 0 && project.calendars.length > 0) {
+    globalCals = project.calendars.length;
+  }
+
+  let actsOnProjCal = 0;
+  let actsOnGlobalCal = 0;
+  let actsOnRsrcCal = 0;
+  const projCalIds = new Set(calRecords.filter((c) => c['clndr_type'] === 'CA_Project').map((c) => c['clndr_id']));
+  const rsrcCalIds = new Set(calRecords.filter((c) => c['clndr_type'] === 'CA_Rsrc').map((c) => c['clndr_id']));
+
+  for (const a of activities) {
+    if (a.calendarId && projCalIds.has(a.calendarId)) actsOnProjCal++;
+    else if (a.calendarId && rsrcCalIds.has(a.calendarId)) actsOnRsrcCal++;
+    else actsOnGlobalCal++;
+  }
+
+  const insights: ScheduleInsightsData = {
+    logicAnalysis: [
+      { category: 'Logic Analysis', kpi: 'Total Relationships', unit: 'Count', value: totalRels, formula: 'Total Relationships from P6', status: 'healthy' },
+      { category: 'Logic Analysis', kpi: 'FS Relationships', unit: 'Count', value: fsRels, formula: 'Finish-to-Start ties', status: fsSharePct >= 90 ? 'healthy' : 'warning' },
+      { category: 'Logic Analysis', kpi: 'SS Relationships', unit: 'Count', value: ssRels, formula: 'Start-to-Start ties', status: 'neutral' },
+      { category: 'Logic Analysis', kpi: 'FF Relationships', unit: 'Count', value: ffRels, formula: 'Finish-to-Finish ties', status: 'neutral' },
+      { category: 'Logic Analysis', kpi: 'SF Relationships', unit: 'Count', value: sfRels, formula: 'Start-to-Finish ties (avoid)', status: sfRels === 0 ? 'healthy' : 'critical' },
+      { category: 'Logic Analysis', kpi: 'SS Closure of Loop', unit: '%', value: `${ssClosureLoopPct}%`, formula: '(FF Links / SS Links) * 100', status: ssClosureLoopPct >= 80 ? 'healthy' : 'warning' },
+      { category: 'Logic Analysis', kpi: 'Average Relationship Density', unit: 'Ratio', value: relDensity.toFixed(2), formula: 'Total Relationships count / Total Nos of Activities', status: relDensity >= 2.0 ? 'healthy' : 'warning' },
+      { category: 'Logic Analysis', kpi: 'Lag Relationships %', unit: '%', value: `${lagRelsPct}%`, formula: 'Relationships with Lag / Total Relationships × 100', status: lagRelsPct <= 5 ? 'healthy' : lagRelsPct <= 10 ? 'warning' : 'critical' },
+    ],
+    durationAnalysis: [
+      { category: 'Duration Analysis', kpi: 'Long Duration Activities', unit: 'Count', value: longDurActsCount, formula: 'Duration > 44 Working Days', status: longDurActsCount / totalActs <= 0.05 ? 'healthy' : 'warning' },
+      { category: 'Duration Analysis', kpi: 'Very Long Duration Activities', unit: 'Count', value: veryLongDurActsCount, formula: 'Duration > 88 Working Days', status: veryLongDurActsCount === 0 ? 'healthy' : 'critical' },
+      { category: 'Duration Analysis', kpi: 'Short Duration Activities', unit: 'Count', value: shortDurActsCount, formula: 'Duration < 5 Days', status: 'neutral' },
+      { category: 'Duration Analysis', kpi: 'Negative and Zero Float Activities', unit: 'Count', value: negZeroFloatCount, formula: 'Float <= 0 Days', status: negativeFloatActs === 0 ? 'healthy' : 'critical' },
+      { category: 'Duration Analysis', kpi: 'High Positive Float Activities', unit: 'Count', value: highFloatActsCount, formula: 'Float > 44 Days', status: highFloatActsCount / totalActs <= 0.1 ? 'healthy' : 'warning' },
+    ],
+    constraintsAnalysis: [
+      { category: 'Constraints Analysis', kpi: 'Hard Constraints', unit: 'Count', value: hardConstraintsCount, formula: 'No. of Mandatory Start + Mandatory Finish Activities', status: hardConstraintsCount === 0 ? 'healthy' : 'critical' },
+      { category: 'Constraints Analysis', kpi: 'Soft Constraints', unit: 'Count', value: softConstraintsCount, formula: 'Soft / As Soon As Possible constraints', status: 'neutral' },
+      { category: 'Constraints Analysis', kpi: 'Total Constraints', unit: 'Count', value: totalConstraintsCount, formula: 'Total Constrained Activities', status: totalConstraintsCount / totalActs <= 0.05 ? 'healthy' : 'warning' },
+      { category: 'Constraints Analysis', kpi: 'Constraint Percentage', unit: '%', value: `${constraintPct}%`, formula: 'Constrained Activities / Total Activities × 100', status: constraintPct <= 5 ? 'healthy' : 'warning' },
+    ],
+    wbsQuality: [
+      { category: 'WBS & Activity Quality', kpi: 'Number of WBS Levels', unit: 'Count', value: maxWbsDepth, formula: 'Maximum WBS Depth', status: 'healthy' },
+      { category: 'WBS & Activity Quality', kpi: 'Duplicate WBS Names', unit: 'Count', value: duplicateWbsCount, formula: 'Count of WBS Having Same Name', status: duplicateWbsCount === 0 ? 'healthy' : 'warning' },
+      { category: 'WBS & Activity Quality', kpi: 'Duplicate Activity Names', unit: 'Count', value: duplicateActCount, formula: 'Count of Activities Having Same Name', status: duplicateActCount === 0 ? 'healthy' : 'warning' },
+      { category: 'WBS & Activity Quality', kpi: 'Activities Without WBS', unit: 'Count', value: actsWithoutWbs, formula: 'Activities without valid WBS parent', status: actsWithoutWbs === 0 ? 'healthy' : 'critical' },
+      { category: 'WBS & Activity Quality', kpi: 'Empty WBS Nodes', unit: 'Count', value: emptyWbsNodesCount, formula: 'Count of WBS with No Activities', status: emptyWbsNodesCount === 0 ? 'healthy' : 'warning' },
+    ],
+    resourceAnalysis: [
+      { category: 'Resource Analysis', kpi: 'Labor Resources', unit: 'Count', value: laborCount, formula: 'Labor resources defined in schedule', status: 'healthy' },
+      { category: 'Resource Analysis', kpi: 'Non-Labor Resources', unit: 'Count', value: nonlaborCount, formula: 'Equipment & plant resources', status: 'healthy' },
+      { category: 'Resource Analysis', kpi: 'Material Resources', unit: 'Count', value: matCount, formula: 'Material resources in catalog', status: 'healthy' },
+      { category: 'Resource Analysis', kpi: 'Total Resource Assignments', unit: 'Count', value: totalResourceAssignments, formula: 'Total task resource assignments', status: 'healthy' },
+      { category: 'Resource Analysis', kpi: 'Overallocated Resources', unit: 'Count', value: 0, formula: 'Resources exceeding limit in any period', status: 'healthy' },
+    ],
+    calendarAnalysis: [
+      { category: 'Calendar Analysis', kpi: 'Project Calendars', unit: 'Count', value: projCals, formula: 'Project-specific Calendars', status: 'neutral' },
+      { category: 'Calendar Analysis', kpi: 'Global Calendars', unit: 'Count', value: globalCals, formula: 'Global Calendars defined', status: 'healthy' },
+      { category: 'Calendar Analysis', kpi: 'Resource Calendars', unit: 'Count', value: rsrcCals, formula: 'Resource-specific Calendars', status: 'neutral' },
+      { category: 'Calendar Analysis', kpi: 'Activities on Project Calendar', unit: 'Count', value: actsOnProjCal, formula: 'Activities assigned project calendars', status: 'neutral' },
+      { category: 'Calendar Analysis', kpi: 'Activities on Global Calendar', unit: 'Count', value: actsOnGlobalCal, formula: 'Activities assigned global calendars', status: 'healthy' },
+      { category: 'Calendar Analysis', kpi: 'Activities on Resource Calendar', unit: 'Count', value: actsOnRsrcCal, formula: 'Activities assigned resource calendars', status: 'neutral' },
+    ],
+  };
+
   return {
     projectDetails: {
       projectName: project.metadata.name,
@@ -424,12 +558,12 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
       totalBudgetedUnits: 100,
       criteriaAUnitsAllotted: 20.0,
       criteriaAApplicableUnits: 20.0,
-      criteriaAUnitsEarned: Math.round(criteriaAEarned * 100) / 100,
-      criteriaAScorePct: Math.round((criteriaAEarned / 20.0) * 1000) / 10,
+      criteriaAUnitsEarned: cleanCriteriaAEarned,
+      criteriaAScorePct: criteriaAScorePct,
       criteriaBUnitsAllotted: 80.0,
       criteriaBApplicableUnits: 80.0,
-      criteriaBUnitsEarned: Math.round(criteriaBEarned * 100) / 100,
-      criteriaBScorePct: Math.round((criteriaBEarned / 80.0) * 1000) / 10,
+      criteriaBUnitsEarned: cleanCriteriaBEarned,
+      criteriaBScorePct: criteriaBScorePct,
       totalApplicableUnits: 100.0,
       totalUnitsEarned: totalEarned,
       overallHealthScorePct: overallScorePct,
@@ -453,5 +587,6 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
       calendarAssignmentBreakdown,
       scatterPlotPoints,
     },
+    insights,
   };
 }

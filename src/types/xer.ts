@@ -84,6 +84,7 @@ export interface Activity {
   totalFloatDays: number;
   freeFloatDays: number;
   isCritical: boolean;
+  isLongestPath?: boolean;
 
   // Progress
   physCompletePct: number; // 0 - 100

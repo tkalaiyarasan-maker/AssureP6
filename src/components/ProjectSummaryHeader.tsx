@@ -14,11 +14,15 @@ import { ActiveTab } from './Navbar';
 interface ProjectSummaryHeaderProps {
   project: ParsedProject;
   onNavigateToTab: (tab: ActiveTab) => void;
+  isSampleActive?: boolean;
+  onOpenUpload?: () => void;
 }
 
 export const ProjectSummaryHeader: React.FC<ProjectSummaryHeaderProps> = ({
   project,
   onNavigateToTab,
+  isSampleActive = false,
+  onOpenUpload,
 }) => {
   const { metadata, stats, healthAudit } = project;
 
@@ -31,6 +35,16 @@ export const ProjectSummaryHeader: React.FC<ProjectSummaryHeaderProps> = ({
             {metadata.code}
           </span>
           <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100">{metadata.name}</h1>
+          {isSampleActive && (
+            <span
+              onClick={onOpenUpload}
+              title="Click to upload your own .XER file"
+              className="cursor-pointer text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 flex items-center gap-1 hover:bg-amber-200 transition-colors"
+            >
+              <span>DEMO SAMPLE</span>
+              <span className="underline ml-0.5">Upload Real .XER &rarr;</span>
+            </span>
+          )}
         </div>
 
         <span className="text-slate-300 dark:text-slate-600 hidden md:inline">·</span>
