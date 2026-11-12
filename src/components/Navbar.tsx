@@ -5,31 +5,44 @@ import {
   FolderOpen,
   Sun,
   Moon,
+  RotateCcw,
 } from 'lucide-react';
 import { SampleProjectInfo, SAMPLE_PROJECTS } from '../data/sampleXerData';
 
-export type ActiveTab = 'healthDashboard' | 'gantt' | 'resourceGantt' | 'activities' | 'wbs' | 'dcma' | 'resources' | 'raw';
+export type ActiveTab =
+  | 'healthDashboard'
+  | 'gantt'
+  | 'tilos'
+  | 'resourceGantt'
+  | 'activities'
+  | 'wbs'
+  | 'dcma'
+  | 'resources'
+  | 'raw';
 
 interface NavbarProps {
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
   onOpenUpload: () => void;
-  onSelectSample: (sample: SampleProjectInfo) => void;
+  onSelectSample?: (sample: SampleProjectInfo) => void;
   onDownloadXer: () => void;
   activeProjectCode: string;
   theme?: 'light' | 'dark';
   onToggleTheme?: () => void;
+  onResetProject?: () => void;
+  isProjectLoaded?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   onTabChange,
   onOpenUpload,
-  onSelectSample,
   onDownloadXer,
   activeProjectCode,
   theme = 'light',
   onToggleTheme,
+  onResetProject,
+  isProjectLoaded = false,
 }) => {
   return (
     <header className="flex items-center justify-between gap-8 px-6 py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 shrink-0 shadow-sm transition-colors">
@@ -69,6 +82,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           }`}
         >
           Gantt Timeline
+        </button>
+        <button
+          onClick={() => onTabChange('tilos')}
+          className={`px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0 transition-colors ${
+            activeTab === 'tilos'
+              ? 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100 shadow-sm font-semibold'
+              : 'hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/40'
+          }`}
+        >
+          TILOS (Time-Chainage)
         </button>
         <button
           onClick={() => onTabChange('resourceGantt')}
@@ -132,26 +155,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
       </nav>
 
-      {/* Zone 3: Primary Action, Theme Toggle & Sample Selector */}
+      {/* Zone 3: Primary Action, Theme Toggle & Export */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Sample selector dropdown */}
-        <select
-          aria-label="Select sample project"
-          className="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-800 dark:text-slate-300 py-1.5 px-2.5 focus:outline-none focus:border-amber-500 hidden sm:block"
-          onChange={(e) => {
-            const sample = SAMPLE_PROJECTS.find((s) => s.id === e.target.value);
-            if (sample) onSelectSample(sample);
-          }}
-          defaultValue=""
-        >
-          <option value="" disabled>Load Sample Project...</option>
-          {SAMPLE_PROJECTS.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.code}: {s.name}
-            </option>
-          ))}
-        </select>
-
         {/* Theme Toggle (Light / Dark) */}
         {onToggleTheme && (
           <button
@@ -182,6 +187,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Download className="w-3.5 h-3.5" />
           <span className="hidden xl:inline">Export .XER</span>
         </button>
+
+        {/* Reset / Close loaded project button */}
+        {isProjectLoaded && onResetProject && (
+          <button
+            onClick={onResetProject}
+            title="Close current project and reset to empty state"
+            className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 bg-slate-100 dark:bg-transparent hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-300 dark:border-slate-800 rounded-lg transition-colors flex items-center gap-1 text-xs"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
+            <span className="hidden xl:inline">Reset</span>
+          </button>
+        )}
 
         {/* Primary CTA */}
         <button

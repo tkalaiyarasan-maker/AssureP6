@@ -8,7 +8,6 @@ import {
   ScatterPoint,
   ScheduleInsightsData,
 } from '../types/healthCheck';
-import { MAHSR_DASHBOARD_DATA } from '../data/mahsrReferenceData';
 
 /**
  * Evaluates any parsed Primavera P6 project against the complete 54-Parameter Health Check Framework

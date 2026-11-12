@@ -6,13 +6,14 @@
 import React, { useState, useMemo } from 'react';
 import { ParsedProject, Activity } from './types/xer';
 import { parseXerProject, exportProjectToXer } from './utils/xerParser';
-import { SAMPLE_PROJECTS, SAMPLE_PROJECT_MAHSR, SampleProjectInfo } from './data/sampleXerData';
+import { SampleProjectInfo } from './data/sampleXerData';
 import { evaluateP6ProgrammeHealth } from './utils/healthCheckEvaluator';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { ProjectSummaryHeader } from './components/ProjectSummaryHeader';
 import { P6HealthCheckDashboard } from './components/dashboard/P6HealthCheckDashboard';
-import { ResourceAssignmentGantt } from './components/ResourceAssignmentGantt';
 import { GanttChart } from './components/GanttChart';
+import { TilosTimeChainageChart } from './components/TilosTimeChainageChart';
+import { ResourceAssignmentGantt } from './components/ResourceAssignmentGantt';
 import { ActivitySheet } from './components/ActivitySheet';
 import { WbsHierarchy } from './components/WbsHierarchy';
 import { DcmaHealthAudit } from './components/DcmaHealthAudit';
@@ -20,6 +21,7 @@ import { ResourceInspector } from './components/ResourceInspector';
 import { RawXerExplorer } from './components/RawXerExplorer';
 import { ActivityDetailModal } from './components/ActivityDetailModal';
 import { UploadModal } from './components/UploadModal';
+import { EmptyStateUpload } from './components/EmptyStateUpload';
 
 export default function App() {
   // Theme state: defaults to 'light' as requested by the user
@@ -49,33 +51,87 @@ export default function App() {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  // State tracking whether the currently displayed project is a bundled demo/sample or user-uploaded
-  const [isSampleActive, setIsSampleActive] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('p6_is_user_uploaded');
-      if (saved === 'true') return false;
-    }
-    return true;
-  });
-
   // Project revision timestamp to force full re-initialization of all views on upload
   const [projectRev, setProjectRev] = useState<number>(() => Date.now());
 
-  // Parse initial project: load saved user XER if present, otherwise default to reference sample
-  const [project, setProject] = useState<ParsedProject>(() => {
+  // Parse initial project: load saved user XER if present; otherwise default to null (no forced demo sample)
+  const [project, setProject] = useState<ParsedProject | null>(() => {
     if (typeof window !== 'undefined') {
-      const savedXer = sessionStorage.getItem('p6_uploaded_xer');
-      const savedName = sessionStorage.getItem('p6_uploaded_name') || 'Project.xer';
-      if (savedXer) {
-        try {
-          return parseXerProject(savedXer, savedName);
-        } catch {
-          // fallback to sample if saved parsing fails
+      try {
+        const savedXer = sessionStorage.getItem('p6_uploaded_xer');
+        const savedName = (sessionStorage.getItem('p6_uploaded_name') || '').toUpperCase();
+
+        // Thoroughly purge any previously cached MAHSR sample from browser storage
+        const isMahsrOrC4 =
+          savedName.includes('MAHSR') ||
+          savedName.includes('C4') ||
+          (savedXer && (
+            savedXer.toUpperCase().includes('MAHSR') ||
+            savedXer.toUpperCase().includes('C4 - CWP') ||
+            savedXer.toUpperCase().includes('PACKAGE C4') ||
+            savedXer.toUpperCase().includes('HIGH-SPEED RAIL')
+          ));
+
+        if (isMahsrOrC4) {
+          sessionStorage.removeItem('p6_uploaded_xer');
+          sessionStorage.removeItem('p6_uploaded_name');
+          sessionStorage.removeItem('p6_is_user_uploaded');
+          localStorage.removeItem('p6_uploaded_xer');
+          localStorage.removeItem('p6_uploaded_name');
+          return null;
         }
+
+        if (savedXer) {
+          return parseXerProject(savedXer, sessionStorage.getItem('p6_uploaded_name') || 'Project.xer');
+        }
+      } catch {
+        // ignore parsing error on stale session data
       }
     }
-    return parseXerProject(SAMPLE_PROJECT_MAHSR, 'MAHSR-C4.xer');
+    return null;
   });
+
+  // Additional mount-time sweep to guarantee no legacy MAHSR / C4 strings persist
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const sName = (sessionStorage.getItem('p6_uploaded_name') || '').toUpperCase();
+        const sXer = (sessionStorage.getItem('p6_uploaded_xer') || '').toUpperCase();
+        const lName = (localStorage.getItem('p6_uploaded_name') || '').toUpperCase();
+        const lXer = (localStorage.getItem('p6_uploaded_xer') || '').toUpperCase();
+
+        if (
+          sName.includes('MAHSR') || sName.includes('C4') ||
+          sXer.includes('MAHSR') || sXer.includes('C4 - CWP') ||
+          lName.includes('MAHSR') || lName.includes('C4') ||
+          lXer.includes('MAHSR')
+        ) {
+          sessionStorage.removeItem('p6_uploaded_xer');
+          sessionStorage.removeItem('p6_uploaded_name');
+          sessionStorage.removeItem('p6_is_user_uploaded');
+          localStorage.removeItem('p6_uploaded_xer');
+          localStorage.removeItem('p6_uploaded_name');
+          setProject(null);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  const handleResetProject = () => {
+    setProject(null);
+    setSelectedActivity(null);
+    try {
+      sessionStorage.removeItem('p6_uploaded_xer');
+      sessionStorage.removeItem('p6_uploaded_name');
+      sessionStorage.removeItem('p6_is_user_uploaded');
+      localStorage.removeItem('p6_uploaded_xer');
+      localStorage.removeItem('p6_uploaded_name');
+    } catch {
+      // ignore storage errors
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('healthDashboard');
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
@@ -83,6 +139,7 @@ export default function App() {
 
   // Dynamically compute the 54-parameter health check dashboard data for the active project
   const healthDashboardData = useMemo(() => {
+    if (!project) return null;
     return evaluateP6ProgrammeHealth(project);
   }, [project]);
 
@@ -91,7 +148,6 @@ export default function App() {
     try {
       const parsed = parseXerProject(content, fileName);
       setProject(parsed);
-      setIsSampleActive(false);
       setProjectRev(Date.now());
       try {
         sessionStorage.setItem('p6_uploaded_xer', content);
@@ -107,17 +163,16 @@ export default function App() {
     }
   };
 
-  // Load sample project and reset states
+  // Optional sample load
   const handleSelectSample = (sample: SampleProjectInfo) => {
     try {
       const parsed = parseXerProject(sample.xerContent, `${sample.code}.xer`);
       setProject(parsed);
-      setIsSampleActive(true);
       setProjectRev(Date.now());
       try {
-        sessionStorage.removeItem('p6_uploaded_xer');
-        sessionStorage.removeItem('p6_uploaded_name');
-        sessionStorage.setItem('p6_is_user_uploaded', 'false');
+        sessionStorage.setItem('p6_uploaded_xer', sample.xerContent);
+        sessionStorage.setItem('p6_uploaded_name', `${sample.code}.xer`);
+        sessionStorage.setItem('p6_is_user_uploaded', 'true');
       } catch {
         // ignore
       }
@@ -130,6 +185,7 @@ export default function App() {
 
   // Export current project as valid .XER file
   const handleDownloadXer = () => {
+    if (!project) return;
     try {
       const rawText = exportProjectToXer(project);
       const blob = new Blob([rawText], { type: 'text/plain;charset=utf-8' });
@@ -147,95 +203,117 @@ export default function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans selection:bg-amber-500/30 selection:text-amber-900 dark:selection:text-amber-200 transition-colors">
-      {/* Top 3-Zone Navigation Bar */}
+      {/* Top Navigation Bar */}
       <Navbar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenUpload={() => setIsUploadModalOpen(true)}
         onSelectSample={handleSelectSample}
         onDownloadXer={handleDownloadXer}
-        activeProjectCode={project.metadata.code}
+        activeProjectCode={project ? project.metadata.code : 'No File Loaded'}
         theme={theme}
         onToggleTheme={toggleTheme}
+        onResetProject={handleResetProject}
+        isProjectLoaded={!!project}
       />
 
-      {/* Project Identity & KPI Summary Bar */}
-      <ProjectSummaryHeader
-        project={project}
-        onNavigateToTab={setActiveTab}
-        isSampleActive={isSampleActive}
-        onOpenUpload={() => setIsUploadModalOpen(true)}
-      />
+      {/* Project Identity & KPI Summary Bar (visible once project is loaded) */}
+      {project && (
+        <ProjectSummaryHeader
+          project={project}
+          onNavigateToTab={setActiveTab}
+          onOpenUpload={() => setIsUploadModalOpen(true)}
+        />
+      )}
 
-      {/* Main Workspace Viewport keyed by project revision for clean refresh */}
-      <main key={`proj_${project.metadata.code}_${projectRev}`} className="flex-1 p-4 lg:p-6 overflow-hidden">
-        {activeTab === 'healthDashboard' && (
-          <P6HealthCheckDashboard
-            data={healthDashboardData}
+      {/* Main Workspace Viewport */}
+      {!project ? (
+        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+          <EmptyStateUpload
+            onLoadXerContent={handleLoadXerContent}
+            onSelectSample={handleSelectSample}
           />
-        )}
+        </main>
+      ) : (
+        <main key={`proj_${project.metadata.code}_${projectRev}`} className="flex-1 p-4 lg:p-6 overflow-hidden">
+          {activeTab === 'healthDashboard' && healthDashboardData && (
+            <P6HealthCheckDashboard
+              data={healthDashboardData}
+            />
+          )}
 
-        {activeTab === 'gantt' && (
-          <GanttChart
-            project={project}
-            onSelectActivity={setSelectedActivity}
-            selectedActivityId={selectedActivity?.id}
-          />
-        )}
+          {activeTab === 'gantt' && (
+            <GanttChart
+              project={project}
+              onSelectActivity={setSelectedActivity}
+              selectedActivityId={selectedActivity?.id}
+            />
+          )}
 
-        {activeTab === 'resourceGantt' && (
-          <ResourceAssignmentGantt
-            project={project}
-            onSelectActivity={setSelectedActivity}
-            selectedActivityId={selectedActivity?.id}
-          />
-        )}
+          {activeTab === 'tilos' && (
+            <TilosTimeChainageChart
+              project={project}
+              onSelectActivity={setSelectedActivity}
+              selectedActivityId={selectedActivity?.id}
+            />
+          )}
 
-        {activeTab === 'activities' && (
-          <ActivitySheet
-            project={project}
-            onSelectActivity={setSelectedActivity}
-            selectedActivityId={selectedActivity?.id}
-          />
-        )}
+          {activeTab === 'resourceGantt' && (
+            <ResourceAssignmentGantt
+              project={project}
+              onSelectActivity={setSelectedActivity}
+              selectedActivityId={selectedActivity?.id}
+            />
+          )}
 
-        {activeTab === 'wbs' && (
-          <WbsHierarchy
-            project={project}
-            onSelectActivity={setSelectedActivity}
-          />
-        )}
+          {activeTab === 'activities' && (
+            <ActivitySheet
+              project={project}
+              onSelectActivity={setSelectedActivity}
+              selectedActivityId={selectedActivity?.id}
+            />
+          )}
 
-        {activeTab === 'dcma' && (
-          <DcmaHealthAudit
-            project={project}
-            onSelectActivity={setSelectedActivity}
-          />
-        )}
+          {activeTab === 'wbs' && (
+            <WbsHierarchy
+              project={project}
+              onSelectActivity={setSelectedActivity}
+            />
+          )}
 
-        {activeTab === 'resources' && (
-          <ResourceInspector
-            project={project}
-            onSelectActivity={setSelectedActivity}
-          />
-        )}
+          {activeTab === 'dcma' && (
+            <DcmaHealthAudit
+              project={project}
+              onSelectActivity={setSelectedActivity}
+            />
+          )}
 
-        {activeTab === 'raw' && (
-          <RawXerExplorer
-            project={project}
-          />
-        )}
-      </main>
+          {activeTab === 'resources' && (
+            <ResourceInspector
+              project={project}
+              onSelectActivity={setSelectedActivity}
+            />
+          )}
+
+          {activeTab === 'raw' && (
+            <RawXerExplorer
+              project={project}
+            />
+          )}
+        </main>
+      )}
 
       {/* Activity Detail Inspector Modal */}
-      <ActivityDetailModal
-        activity={selectedActivity}
-        project={project}
-        onClose={() => setSelectedActivity(null)}
-        onSelectActivity={setSelectedActivity}
-      />
+      {project && (
+        <ActivityDetailModal
+          activity={selectedActivity}
+          project={project}
+          onClose={() => setSelectedActivity(null)}
+          onSelectActivity={setSelectedActivity}
+        />
+      )}
 
-      {/* XER Upload / Sample Picker Modal */}
+      {/* XER Upload Modal */}
       <UploadModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
