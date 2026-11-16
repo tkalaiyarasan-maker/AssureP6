@@ -167,7 +167,7 @@ export default async function handler(
         : { count: 1, resetAt: now + LOCKOUT_WINDOW_MS };
     failedAttempts.set(ip, nextRecord);
 
-    sendJson(res, 401, { authenticated: false, error: 'Incorrect access password.' });
+    sendJson(res, 401, { authenticated: false, error: 'Incorrect password. Contact Kalai for password.' });
     return;
   }
 

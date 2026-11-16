@@ -160,7 +160,7 @@ export const PasswordGate: React.FC<PasswordGateProps> = ({
         return;
       }
 
-      setError(data.error || 'Incorrect access password.');
+      setError(data.error || 'Incorrect password. Contact Kalai for password.');
       setPassword('');
       inputRef.current?.focus();
     } catch {
@@ -356,28 +356,33 @@ export const PasswordGate: React.FC<PasswordGateProps> = ({
           <aside className="lg:col-span-5 flex flex-col">
             <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-lg p-7 sm:p-8 flex flex-col justify-between space-y-6">
               <div className="space-y-6">
-                {/* Brand Lockup */}
-                <div className="text-center space-y-3 pt-2">
-                  {!logoFailed ? (
-                    <img
-                      src="/assurep6-logo.png"
-                      alt="Assure P6 Logo"
-                      referrerPolicy="no-referrer"
-                      onError={() => setLogoFailed(true)}
-                      className="w-20 h-20 mx-auto object-contain"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 mx-auto rounded-full bg-amber-400 text-slate-950 font-extrabold text-2xl flex items-center justify-center">
-                      P6
-                    </div>
-                  )}
+                {/* Brand Lockup (Logo + Assure P6 separate from Login heading) */}
+                <div className="flex flex-col items-center text-center space-y-4 pt-1">
+                  <div className="flex items-center justify-center gap-3">
+                    {!logoFailed ? (
+                      <img
+                        src="/assurep6-logo.png"
+                        alt="Assure P6 Logo"
+                        referrerPolicy="no-referrer"
+                        onError={() => setLogoFailed(true)}
+                        className="w-14 h-14 object-contain shrink-0"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-amber-400 text-slate-950 font-extrabold text-xl flex items-center justify-center shrink-0">
+                        P6
+                      </div>
+                    )}
+                    <span className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+                      Assure P6
+                    </span>
+                  </div>
 
-                  <div className="space-y-1">
-                    <h2 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-                      Unlock Assure P6
+                  <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-4 space-y-1">
+                    <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                      Login
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Enter your workspace passcode to load your `.XER` analyzer
+                      Enter your workspace passcode to access the .XER analyzer
                     </p>
                   </div>
                 </div>
@@ -446,7 +451,7 @@ export const PasswordGate: React.FC<PasswordGateProps> = ({
                     disabled={!password.trim() || isSubmitting}
                     className="w-full py-3 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
                   >
-                    <span>{isSubmitting ? 'Verifying...' : 'Open Analyzer Workspace'}</span>
+                    <span>{isSubmitting ? 'Verifying...' : 'Login'}</span>
                     {!isSubmitting && <ArrowRight className="w-4 h-4" />}
                   </button>
                 </form>
