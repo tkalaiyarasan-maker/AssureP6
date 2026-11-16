@@ -70,12 +70,13 @@ export const EmptyStateUpload: React.FC<EmptyStateUploadProps> = ({
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-8 select-none">
       {/* Hero Welcome Banner */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-semibold">
-          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-          Oracle Primavera P6 Professional Analyzer
-        </div>
+        <img
+          src="/p6assure-logo.png"
+          alt="P6Assure Logo"
+          className="w-20 h-20 mx-auto object-contain drop-shadow-md"
+        />
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-          Primavera P6 Programme Health Check &amp; Linear Analyzer
+          P6Assure
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
           Upload your Oracle Primavera P6 (<span className="font-mono font-semibold text-slate-800 dark:text-slate-200">.XER</span>) file to evaluate 54-parameter health check, interactive Gantt timeline, TILOS time-chainage chart, WBS analysis, and DCMA 14 audit.

@@ -11,7 +11,6 @@ import {
   LayoutDashboard,
   Table as TableIcon,
   BarChart3,
-  Award,
   ListOrdered,
   Printer,
   Sparkles,
@@ -35,9 +34,13 @@ export const P6HealthCheckDashboard: React.FC<P6HealthCheckDashboardProps> = ({ 
       {/* 1. Master Header Title Banner (Executive Navy Banner matching reference image P61.png) */}
       <div className="px-6 py-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-3 shadow-sm print:bg-slate-900 print:text-white">
         <div className="flex items-center gap-3">
-          <Award className="w-5 h-5 text-amber-400" />
+          <img
+            src="/p6assure-logo.png"
+            alt="P6Assure"
+            className="w-7 h-7 object-contain shrink-0"
+          />
           <h1 className="text-base font-extrabold tracking-wide uppercase text-white">
-            P6 Programme Health Check – Dashboard
+            P6Assure – Programme Health Check Dashboard
           </h1>
         </div>
 

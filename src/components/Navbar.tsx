@@ -50,10 +50,14 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="flex items-center gap-3 shrink-0">
         <a
           href="/"
-          className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap flex items-center gap-2 hover:text-amber-500 transition-colors"
+          className="text-base font-extrabold tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap flex items-center gap-2.5 hover:text-amber-500 transition-colors"
         >
-          <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 rotate-45 inline-block" />
-          <span>Primavera P6 Health Check</span>
+          <img
+            src="/p6assure-logo.png"
+            alt="P6Assure"
+            className="w-8 h-8 object-contain shrink-0"
+          />
+          <span>P6Assure</span>
         </a>
         <span className="text-xs text-slate-500 dark:text-slate-400 font-mono hidden sm:inline">
           / {activeProjectCode}
