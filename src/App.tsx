@@ -133,6 +133,17 @@ export default function App() {
     }
   };
 
+  // Keep browser tab title synchronized with the currently opened project
+  React.useEffect(() => {
+    if (project?.metadata?.code) {
+      document.title = `Assure P6 / ${project.metadata.code}`;
+    } else if (project?.metadata?.name) {
+      document.title = `Assure P6 / ${project.metadata.name}`;
+    } else {
+      document.title = 'Assure P6';
+    }
+  }, [project]);
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('healthDashboard');
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
