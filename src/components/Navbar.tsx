@@ -53,11 +53,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="text-base font-extrabold tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap flex items-center gap-2.5 hover:text-amber-500 transition-colors"
         >
           <img
-            src="/p6assure-logo.png"
-            alt="P6Assure"
+            src="/assurep6-logo.png"
+            alt="Assure P6"
             className="w-8 h-8 object-contain shrink-0"
           />
-          <span>P6Assure</span>
+          <span>Assure P6</span>
         </a>
         <span className="text-xs text-slate-500 dark:text-slate-400 font-mono hidden sm:inline">
           / {activeProjectCode}

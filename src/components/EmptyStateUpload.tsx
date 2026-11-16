@@ -71,12 +71,12 @@ export const EmptyStateUpload: React.FC<EmptyStateUploadProps> = ({
       {/* Hero Welcome Banner */}
       <div className="text-center space-y-3">
         <img
-          src="/p6assure-logo.png"
-          alt="P6Assure Logo"
+          src="/assurep6-logo.png"
+          alt="Assure P6 Logo"
           className="w-20 h-20 mx-auto object-contain drop-shadow-md"
         />
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-          P6Assure
+          Assure P6
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
           Upload your Oracle Primavera P6 (<span className="font-mono font-semibold text-slate-800 dark:text-slate-200">.XER</span>) file to evaluate 54-parameter health check, interactive Gantt timeline, TILOS time-chainage chart, WBS analysis, and DCMA 14 audit.
