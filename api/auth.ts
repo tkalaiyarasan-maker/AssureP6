@@ -12,8 +12,15 @@ interface AttemptRecord {
 
 const failedAttempts = new Map<string, AttemptRecord>();
 
-function getExpectedPassword(): string {
-  return process.env.APP_PASSWORD || 'AssureP6@2026';
+// Precomputed SHA-256 hash of the default access password (no plaintext password stored in source)
+const DEFAULT_PASSWORD_SHA256 =
+  '95bd4955ae31f6b0dc4ba5c79725bda801f34ec0ce29f1cf9bf74d5bc3fc461d';
+
+function getExpectedPasswordHashHex(): string {
+  if (process.env.APP_PASSWORD && process.env.APP_PASSWORD.length > 0) {
+    return createHash('sha256').update(process.env.APP_PASSWORD, 'utf8').digest('hex');
+  }
+  return DEFAULT_PASSWORD_SHA256;
 }
 
 function getSigningSecret(): string {
@@ -21,8 +28,12 @@ function getSigningSecret(): string {
     return process.env.AUTH_SECRET.trim();
   }
   return createHash('sha256')
-    .update(`assurep6-hmac-key::${getExpectedPassword()}`)
+    .update(`assurep6-hmac-key::${getExpectedPasswordHashHex()}`)
     .digest('hex');
+}
+
+function sha256Hex(value: string): string {
+  return createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
 function sha256Buffer(value: string): Buffer {
@@ -31,6 +42,13 @@ function sha256Buffer(value: string): Buffer {
 
 function constantTimeEquals(a: string, b: string): boolean {
   return timingSafeEqual(sha256Buffer(a), sha256Buffer(b));
+}
+
+function verifyPassword(inputPassword: string): boolean {
+  const inputHashBuffer = Buffer.from(sha256Hex(inputPassword), 'hex');
+  const expectedHashBuffer = Buffer.from(getExpectedPasswordHashHex(), 'hex');
+  if (inputHashBuffer.length !== expectedHashBuffer.length) return false;
+  return timingSafeEqual(inputHashBuffer, expectedHashBuffer);
 }
 
 function signToken(expiresAtMs: number): string {
@@ -136,7 +154,7 @@ export default async function handler(
       return;
     }
 
-    if (constantTimeEquals(password, getExpectedPassword())) {
+    if (verifyPassword(password)) {
       failedAttempts.delete(ip);
       const token = signToken(now + TOKEN_TTL_MS);
       sendJson(res, 200, { authenticated: true, token });
