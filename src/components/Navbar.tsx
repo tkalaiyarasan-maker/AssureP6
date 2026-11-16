@@ -6,7 +6,7 @@ import {
   Sun,
   Moon,
   RotateCcw,
-  Lock,
+  LogOut,
 } from 'lucide-react';
 import { SampleProjectInfo, SAMPLE_PROJECTS } from '../data/sampleXerData';
 
@@ -32,7 +32,7 @@ interface NavbarProps {
   onToggleTheme?: () => void;
   onResetProject?: () => void;
   isProjectLoaded?: boolean;
-  onLockSession?: () => void;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -45,7 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleTheme,
   onResetProject,
   isProjectLoaded = false,
-  onLockSession,
+  onLogout,
 }) => {
   return (
     <header className="flex items-center justify-between gap-8 px-6 py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 shrink-0 shadow-sm transition-colors">
@@ -216,15 +216,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           Open .XER File
         </button>
 
-        {/* Lock Session button */}
-        {onLockSession && (
+        {/* Log out button */}
+        {onLogout && (
           <button
-            onClick={onLockSession}
-            title="Lock Assure P6 workspace"
-            className="p-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 rounded-lg transition-colors flex items-center gap-1 text-xs"
+            onClick={onLogout}
+            title="Log out of Assure P6"
+            className="p-1.5 px-2.5 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-300 dark:border-slate-700 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer"
           >
-            <Lock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-            <span className="hidden xl:inline">Lock</span>
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Log out</span>
           </button>
         )}
       </div>

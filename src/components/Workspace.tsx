@@ -21,13 +21,13 @@ import { EmptyStateUpload } from './EmptyStateUpload';
 interface WorkspaceProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
-  onLockSession: () => void;
+  onLogout: () => void;
 }
 
 export const Workspace: React.FC<WorkspaceProps> = ({
   theme,
   onToggleTheme,
-  onLockSession,
+  onLogout,
 }) => {
   // Project revision timestamp to force full re-initialization of all views on upload
   const [projectRev, setProjectRev] = useState<number>(() => Date.now());
@@ -204,7 +204,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
         onToggleTheme={onToggleTheme}
         onResetProject={handleResetProject}
         isProjectLoaded={!!project}
-        onLockSession={onLockSession}
+        onLogout={onLogout}
       />
 
       {/* Project Identity & KPI Summary Bar (visible once project is loaded) */}

@@ -18,6 +18,7 @@ interface PasswordGateProps {
   onAuthenticated: (token: string) => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
+  sessionNotice?: string | null;
 }
 
 type LeakCategoryKey = 'logic' | 'float' | 'constraints' | 'tilos';
@@ -121,6 +122,7 @@ export const PasswordGate: React.FC<PasswordGateProps> = ({
   onAuthenticated,
   theme,
   onToggleTheme,
+  sessionNotice,
 }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -380,6 +382,17 @@ export const PasswordGate: React.FC<PasswordGateProps> = ({
                   </div>
                 </div>
 
+                {/* Session Timeout Notice */}
+                {sessionNotice && !error && (
+                  <div
+                    role="status"
+                    className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2"
+                  >
+                    <Clock className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                    <span>{sessionNotice}</span>
+                  </div>
+                )}
+
                 {/* Password Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-1.5">
@@ -444,7 +457,7 @@ export const PasswordGate: React.FC<PasswordGateProps> = ({
                 <div className="flex items-start gap-2.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                   <p className="leading-relaxed">
-                    <strong className="text-slate-800 dark:text-slate-200">100% Data Privacy:</strong> Your schedule files stay in browser session memory only—zero server uploads, zero database storage, and wiped the moment you close the tab.
+                    <strong className="text-slate-800 dark:text-slate-200">100% Data Privacy:</strong> Your schedule files stay in browser session memory only—zero server uploads, auto-logged out after 10 minutes idle, and wiped when you close the tab.
                   </p>
                 </div>
               </div>
