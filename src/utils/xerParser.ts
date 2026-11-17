@@ -3,6 +3,7 @@ import {
   ActivityStatus,
   ActivityType,
   Calendar,
+  CalendarType,
   DcmaAuditResult,
   DcmaCheckItem,
   ParsedProject,
@@ -18,6 +19,10 @@ import {
   XerRawData,
   XerRawTable,
 } from '../types/xer';
+import {
+  computeLongestAndSubsequentPaths,
+  parseCalendarData,
+} from './scheduleAnalysis';
 
 /**
  * Parses raw text from a Primavera P6 .xer file into structured raw tables
@@ -158,7 +163,9 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
   const projCode = projRecord['proj_short_name'] || header.projectName || 'PROJECT-1';
   const projName = projRecord['task_code_base'] || projRecord['proj_short_name'] || header.projectName || 'Primavera P6 Project';
   const planStartDate = normalizeDate(projRecord['plan_start_date']);
-  const planFinishDate = normalizeDate(projRecord['plan_end_date']);
+  const mustFinishByDate = normalizeDate(projRecord['plan_end_date']);
+  const scheduledFinishDate = normalizeDate(projRecord['scd_end_date']);
+  const defaultCalendarId = projRecord['clndr_id'] || undefined;
   const dataDate = normalizeDate(projRecord['last_recalc_date']) || planStartDate || new Date().toISOString().split('T')[0];
 
   const metadata: ProjectMetadata = {
@@ -166,7 +173,10 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
     code: projCode,
     name: projName,
     planStartDate,
-    planFinishDate,
+    planFinishDate: scheduledFinishDate || mustFinishByDate,
+    scheduledFinishDate,
+    mustFinishByDate,
+    defaultCalendarId,
     dataDate,
     status: projRecord['status_code'] || 'Active',
     createdDate: normalizeDate(projRecord['add_date']),
@@ -181,10 +191,38 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
 
   if (clndrTable) {
     for (const rec of clndrTable.records) {
+      const rawType = (rec['clndr_type'] || '').trim();
+      let type: CalendarType = 'CA_Base';
+      let typeLabel: Calendar['typeLabel'] = 'Global';
+      if (rawType === 'CA_Project') {
+        type = 'CA_Project';
+        typeLabel = 'Project';
+      } else if (rawType === 'CA_Rsrc') {
+        type = 'CA_Rsrc';
+        typeLabel = 'Resource';
+      } else {
+        type = 'CA_Base';
+        typeLabel = 'Global';
+      }
+
+      const calName = rec['clndr_name'] || 'Standard Calendar';
+      const parsedCalData = parseCalendarData(rec['clndr_data'], calName);
+
       const cal: Calendar = {
         id: rec['clndr_id'],
-        name: rec['clndr_name'] || 'Standard Calendar',
+        name: calName,
+        type,
+        typeLabel,
+        projId: rec['proj_id'] || undefined,
+        baseCalendarId: rec['base_clndr_id'] || undefined,
+        isDefault: rec['default_flag'] === 'Y' || rec['clndr_id'] === defaultCalendarId,
         hoursPerDay: parseFloat(rec['day_hr_cnt'] || '8') || 8,
+        workingWeekdays: parsedCalData.workingWeekdays,
+        nonWorkingWeekdays: parsedCalData.nonWorkingWeekdays,
+        exceptionDates: parsedCalData.exceptionDates,
+        extraWorkingDates: parsedCalData.extraWorkingDates,
+        nonWorkingPeriods: parsedCalData.nonWorkingPeriods,
+        assignedActivitiesCount: 0,
       };
       calendars.push(cal);
       clndrMap.set(cal.id, cal);
@@ -380,16 +418,27 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
 
       const isMilestone = type === 'TT_Mile' || type === 'TT_FinMile';
 
-      // Calendar
-      const calId = rec['clndr_id'];
-      const cal = clndrMap.get(calId);
+      // Calendar (use task calendar, falling back to project default calendar)
+      const fallbackCal =
+        (defaultCalendarId ? clndrMap.get(defaultCalendarId) : undefined) ||
+        calendars.find((c) => c.type === 'CA_Project') ||
+        calendars[0];
+      const calId = rec['clndr_id'] || fallbackCal?.id;
+      const cal = calId ? clndrMap.get(calId) || fallbackCal : undefined;
+      if (cal) {
+        cal.assignedActivitiesCount = (cal.assignedActivitiesCount || 0) + 1;
+      }
       const hoursPerDay = cal && cal.hoursPerDay > 0 ? cal.hoursPerDay : 8.0;
 
-      // Dates
-      const startDate = normalizeDate(rec['act_start_date'] || rec['target_start_date'] || rec['early_start_date']);
-      const finishDate = normalizeDate(rec['act_end_date'] || rec['target_end_date'] || rec['early_end_date']);
-      const earlyStartDate = normalizeDate(rec['early_start_date']);
-      const earlyFinishDate = normalizeDate(rec['early_end_date']);
+      // Dates: In Primavera P6, Start/Finish follow Actual -> Scheduled Early -> Target Planned
+      const startDate = normalizeDate(
+        rec['act_start_date'] || rec['early_start_date'] || rec['restart_date'] || rec['target_start_date']
+      );
+      const finishDate = normalizeDate(
+        rec['act_end_date'] || rec['early_end_date'] || rec['reend_date'] || rec['target_end_date']
+      );
+      const earlyStartDate = normalizeDate(rec['early_start_date'] || rec['restart_date']);
+      const earlyFinishDate = normalizeDate(rec['early_end_date'] || rec['reend_date']);
       const lateStartDate = normalizeDate(rec['late_start_date']);
       const lateFinishDate = normalizeDate(rec['late_end_date']);
       const actualStartDate = normalizeDate(rec['act_start_date']);
@@ -490,8 +539,10 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
         wbsCode: wbsNode ? wbsNode.code : 'ROOT',
         wbsName: wbsNode ? wbsNode.name : 'Project Root',
         wbsPath: wbsNode ? wbsNode.fullPath : '',
-        calendarId: calId,
+        calendarId: cal?.id || calId,
         calendarName: cal ? cal.name : undefined,
+        calendarType: cal ? cal.type : undefined,
+        calendarHoursPerDay: hoursPerDay,
         constraintType: rec['cstr_type'],
         constraintDate: normalizeDate(rec['cstr_date']),
       };
@@ -541,62 +592,10 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
     });
   }
 
-  // Longest Path determination (Oracle Primavera standard)
-  let latestProjFinish = '';
-  for (const a of activities) {
-    if (a.finishDate && (!latestProjFinish || a.finishDate > latestProjFinish)) {
-      latestProjFinish = a.finishDate;
-    }
-  }
-
-  // Find candidate terminal activities finishing at or within 2 days of latest finish
-  const terminalCandidates = activities.filter(
-    (a) =>
-      a.finishDate &&
-      (a.successors.length === 0 || a.type === 'TT_FinMile') &&
-      Math.abs(new Date(a.finishDate).getTime() - new Date(latestProjFinish).getTime()) <= 86400000 * 2
-  );
-
-  const longestPathSet = new Set<string>();
-  const traceQueue: string[] = (terminalCandidates.length > 0 ? terminalCandidates : activities.slice(0, 1)).map(
-    (a) => a.id
-  );
-  const visitedTrace = new Set<string>();
-
-  while (traceQueue.length > 0) {
-    const curId = traceQueue.shift()!;
-    if (visitedTrace.has(curId)) continue;
-    visitedTrace.add(curId);
-    longestPathSet.add(curId);
-
-    const act = taskMap.get(curId);
-    if (!act || act.predecessors.length === 0) continue;
-
-    // Check driving predecessors first
-    const drivingPreds = act.predecessors.filter((p) => p.driving);
-    if (drivingPreds.length > 0) {
-      for (const dp of drivingPreds) {
-        if (!visitedTrace.has(dp.predTaskId)) traceQueue.push(dp.predTaskId);
-      }
-    } else {
-      // Trace critical or minimum float predecessors
-      let minF = 99999;
-      for (const p of act.predecessors) {
-        const pred = taskMap.get(p.predTaskId);
-        if (pred && pred.totalFloatDays < minF) minF = pred.totalFloatDays;
-      }
-      const bestPreds = act.predecessors.filter((p) => {
-        const pred = taskMap.get(p.predTaskId);
-        return pred && pred.totalFloatDays <= Math.max(0, minF);
-      });
-      for (const bp of bestPreds) {
-        if (!visitedTrace.has(bp.predTaskId)) traceQueue.push(bp.predTaskId);
-      }
-    }
-  }
-
+  // Primary & Subsequent Longest Paths computation (Oracle Primavera standard)
+  const { primaryIds, chains: longestPaths } = computeLongestAndSubsequentPaths(activities, taskMap, 10);
   for (const act of activities) {
-    act.isLongestPath = longestPathSet.has(act.id);
+    act.isLongestPath = primaryIds.has(act.id);
   }
 
   // Calculate WBS roll-up progress
@@ -626,14 +625,14 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
   }
   calculateWbsProgress(rootWbsNodes);
 
-  // Compute overall stats
+  // Compute overall stats (aligning Project Finish with P6 scd_end_date or max activity finish rather than stale Must-Finish-By)
   let totalCrit = 0;
   let totalComp = 0;
   let totalProg = 0;
   let totalNotStart = 0;
   let totalMile = 0;
   let minStart = metadata.planStartDate;
-  let maxEnd = metadata.planFinishDate;
+  let maxActFinish: string | undefined;
   let minFloat = 99999;
   let maxFloat = -99999;
 
@@ -646,11 +645,15 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
     if (act.type === 'TT_Mile' || act.type === 'TT_FinMile') totalMile++;
 
     if (act.startDate && (!minStart || act.startDate < minStart)) minStart = act.startDate;
-    if (act.finishDate && (!maxEnd || act.finishDate > maxEnd)) maxEnd = act.finishDate;
+    if (act.finishDate && (!maxActFinish || act.finishDate > maxActFinish)) maxActFinish = act.finishDate;
 
     if (act.totalFloatDays < minFloat) minFloat = act.totalFloatDays;
     if (act.totalFloatDays > maxFloat) maxFloat = act.totalFloatDays;
   }
+
+  const maxEnd = scheduledFinishDate || maxActFinish || mustFinishByDate;
+  metadata.scheduledFinishDate = maxEnd;
+  metadata.planFinishDate = maxEnd;
 
   if (minFloat === 99999) minFloat = 0;
   if (maxFloat === -99999) maxFloat = 0;
@@ -693,6 +696,7 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
     resources,
     calendars,
     relationships: allRelationships,
+    longestPaths,
     rawTables: tables,
     rawText: rawData.rawText,
     stats,
@@ -710,9 +714,38 @@ export function performDcmaAudit(
 ): DcmaAuditResult {
   const total = activities.length || 1;
   const checks: DcmaCheckItem[] = [];
+  const taskById = new Map<string, Activity>();
+  for (const a of activities) taskById.set(a.id, a);
+
+  const mapActivityItem = (a: Activity, reason: string) => ({
+    id: a.id,
+    code: a.code,
+    name: a.name,
+    reason,
+    wbsPath: a.wbsPath || a.wbsName,
+    calendarName: a.calendarName || 'Unassigned',
+    startDate: a.startDate,
+    finishDate: a.finishDate,
+    totalFloatDays: a.totalFloatDays,
+  });
+
+  const mapRelItem = (r: Relationship, label: string, reason: string) => {
+    const succ = taskById.get(r.taskId);
+    const pred = taskById.get(r.predTaskId);
+    return {
+      id: succ ? succ.id : r.taskId,
+      code: `${pred ? pred.code : r.predTaskId} -> ${succ ? succ.code : r.taskId}`,
+      name: succ ? `${succ.name} (${label})` : label,
+      reason,
+      wbsPath: succ?.wbsPath || succ?.wbsName,
+      calendarName: succ?.calendarName || pred?.calendarName,
+      startDate: succ?.startDate,
+      finishDate: succ?.finishDate,
+      totalFloatDays: succ?.totalFloatDays,
+    };
+  };
 
   // 1. Logic: Missing Predecessors (Open Starts)
-  // Target: < 5% of non-complete tasks (excluding start milestones)
   const openStarts = activities.filter(
     (a) => a.status !== 'TK_Complete' && a.type !== 'TT_Mile' && a.predecessors.length === 0
   );
@@ -728,16 +761,10 @@ export function performDcmaAudit(
     totalCount: total,
     actualPct: openStartsPct,
     severity: openStartsPct === 0 ? 'pass' : openStartsPct <= 5 ? 'warning' : 'fail',
-    affectedActivities: openStarts.map((a) => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      reason: 'No predecessor relationship defined',
-    })),
+    affectedActivities: openStarts.map((a) => mapActivityItem(a, 'No predecessor relationship defined')),
   });
 
   // 2. Logic: Missing Successors (Open Finishes)
-  // Target: < 5% of non-complete tasks (excluding finish milestones)
   const openFinishes = activities.filter(
     (a) => a.status !== 'TK_Complete' && a.type !== 'TT_FinMile' && a.successors.length === 0
   );
@@ -753,16 +780,10 @@ export function performDcmaAudit(
     totalCount: total,
     actualPct: openFinishesPct,
     severity: openFinishesPct === 0 ? 'pass' : openFinishesPct <= 5 ? 'warning' : 'fail',
-    affectedActivities: openFinishes.map((a) => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      reason: 'No successor relationship defined',
-    })),
+    affectedActivities: openFinishes.map((a) => mapActivityItem(a, 'No successor relationship defined')),
   });
 
   // 3. Leads (Negative Lags)
-  // Target: 0% leads allowed
   const leads = relationships.filter((r) => r.lagHours < 0);
   const totalRels = relationships.length || 1;
   const leadsPct = Math.round((leads.length / totalRels) * 1000) / 10;
@@ -777,16 +798,12 @@ export function performDcmaAudit(
     totalCount: totalRels,
     actualPct: leadsPct,
     severity: leads.length === 0 ? 'pass' : 'fail',
-    affectedActivities: leads.map((r) => ({
-      id: r.id,
-      code: r.predTaskCode || r.taskId,
-      name: `Lead lag of ${r.lagDays} days on logic link`,
-      reason: `Negative lag (${r.lagDays}d) violates standard CPM forward pass`,
-    })),
+    affectedActivities: leads.map((r) =>
+      mapRelItem(r, `Lead ${r.lagDays}d`, `Negative lag (${r.lagDays}d) violates standard CPM forward pass`)
+    ),
   });
 
   // 4. Lags (Positive Lag)
-  // Target: < 10% of relationships
   const positiveLags = relationships.filter((r) => r.lagHours > 0);
   const positiveLagsPct = Math.round((positiveLags.length / totalRels) * 1000) / 10;
   checks.push({
@@ -800,16 +817,12 @@ export function performDcmaAudit(
     totalCount: totalRels,
     actualPct: positiveLagsPct,
     severity: positiveLagsPct <= 5 ? 'pass' : positiveLagsPct <= 10 ? 'warning' : 'fail',
-    affectedActivities: positiveLags.map((r) => ({
-      id: r.id,
-      code: r.predTaskCode || r.taskId,
-      name: `Lag of +${r.lagDays} days`,
-      reason: `Positive lag (+${r.lagDays}d) on dependency`,
-    })),
+    affectedActivities: positiveLags.map((r) =>
+      mapRelItem(r, `+${r.lagDays}d lag`, `Positive lag (+${r.lagDays}d) on ${r.type.replace('PR_', '')} dependency`)
+    ),
   });
 
   // 5. Relationship Types: Finish-to-Start (FS) dominance
-  // Target: >= 90% of logic links should be FS
   const fsLinks = relationships.filter((r) => r.type === 'PR_FS');
   const nonFsLinks = relationships.filter((r) => r.type !== 'PR_FS');
   const fsPct = Math.round((fsLinks.length / totalRels) * 1000) / 10;
@@ -824,17 +837,13 @@ export function performDcmaAudit(
     totalCount: totalRels,
     actualPct: fsPct,
     severity: fsPct >= 90 ? 'pass' : fsPct >= 80 ? 'warning' : 'fail',
-    affectedActivities: nonFsLinks.map((r) => ({
-      id: r.id,
-      code: r.predTaskCode || r.taskId,
-      name: `Type: ${r.type.replace('PR_', '')}`,
-      reason: `Non-standard relationship type (${r.type.replace('PR_', '')})`,
-    })),
+    affectedActivities: nonFsLinks.map((r) =>
+      mapRelItem(r, r.type.replace('PR_', ''), `Non-FS relationship type (${r.type.replace('PR_', '')})`)
+    ),
   });
 
   // 6. Hard Constraints
-  // Target: < 5% of incomplete activities
-  const hardConstraintKeywords = ['MAND', 'MUST', 'CS_MAND', 'CS_MS'];
+  const hardConstraintKeywords = ['MAND', 'MUST', 'CS_MAND', 'CS_MS', 'CS_ME'];
   const constrainedActivities = activities.filter((a) => {
     if (!a.constraintType) return false;
     const c = a.constraintType.toUpperCase();
@@ -852,16 +861,12 @@ export function performDcmaAudit(
     totalCount: total,
     actualPct: constrainedPct,
     severity: constrainedPct === 0 ? 'pass' : constrainedPct <= 5 ? 'warning' : 'fail',
-    affectedActivities: constrainedActivities.map((a) => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      reason: `Hard constraint (${a.constraintType}) set on ${a.constraintDate || 'activity'}`,
-    })),
+    affectedActivities: constrainedActivities.map((a) =>
+      mapActivityItem(a, `Hard constraint (${a.constraintType}) set on ${a.constraintDate || 'activity'}`)
+    ),
   });
 
   // 7. High Float (> 44 working days / 2 calendar months)
-  // Target: < 5%
   const highFloat = activities.filter((a) => a.status !== 'TK_Complete' && a.totalFloatDays > 44);
   const highFloatPct = Math.round((highFloat.length / total) * 1000) / 10;
   checks.push({
@@ -875,16 +880,12 @@ export function performDcmaAudit(
     totalCount: total,
     actualPct: highFloatPct,
     severity: highFloatPct <= 5 ? 'pass' : highFloatPct <= 10 ? 'warning' : 'fail',
-    affectedActivities: highFloat.map((a) => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      reason: `Total float is ${a.totalFloatDays} days (> 44d threshold)`,
-    })),
+    affectedActivities: highFloat.map((a) =>
+      mapActivityItem(a, `Total float is ${a.totalFloatDays} days (> 44d threshold)`)
+    ),
   });
 
   // 8. Negative Total Float (Compression / Delay)
-  // Target: 0%
   const negativeFloat = activities.filter((a) => a.status !== 'TK_Complete' && a.totalFloatDays < 0);
   const negativeFloatPct = Math.round((negativeFloat.length / total) * 1000) / 10;
   checks.push({
@@ -898,19 +899,13 @@ export function performDcmaAudit(
     totalCount: total,
     actualPct: negativeFloatPct,
     severity: negativeFloat.length === 0 ? 'pass' : 'fail',
-    affectedActivities: negativeFloat.map((a) => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      reason: `Critical delay: total float is ${a.totalFloatDays} days`,
-    })),
+    affectedActivities: negativeFloat.map((a) =>
+      mapActivityItem(a, `Critical delay: total float is ${a.totalFloatDays} days`)
+    ),
   });
 
   // 9. High Duration (> 44 working days)
-  // Target: < 5% (excluding LOE/Summary)
-  const highDuration = activities.filter(
-    (a) => a.type === 'TT_Task' && a.origDurationDays > 44
-  );
+  const highDuration = activities.filter((a) => a.type === 'TT_Task' && a.origDurationDays > 44);
   const highDurationPct = Math.round((highDuration.length / total) * 1000) / 10;
   checks.push({
     id: 9,
@@ -923,20 +918,15 @@ export function performDcmaAudit(
     totalCount: total,
     actualPct: highDurationPct,
     severity: highDurationPct <= 5 ? 'pass' : highDurationPct <= 10 ? 'warning' : 'fail',
-    affectedActivities: highDuration.map((a) => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      reason: `Duration is ${a.origDurationDays} days (> 44d)`,
-    })),
+    affectedActivities: highDuration.map((a) =>
+      mapActivityItem(a, `Duration is ${a.origDurationDays} days (> 44d)`)
+    ),
   });
 
   // 10. Invalid Dates (forecast in past or actual in future)
   const todayStr = dataDate || new Date().toISOString().split('T')[0];
   const invalidDates = activities.filter((a) => {
-    // Actual start after data date
     if (a.actualStartDate && a.actualStartDate > todayStr) return true;
-    // In progress or not started with early finish in past
     if (a.status !== 'TK_Complete' && a.finishDate && a.finishDate < todayStr) return true;
     return false;
   });
@@ -952,16 +942,12 @@ export function performDcmaAudit(
     totalCount: total,
     actualPct: invalidDatesPct,
     severity: invalidDates.length === 0 ? 'pass' : 'fail',
-    affectedActivities: invalidDates.map((a) => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      reason: `Forecast date ${a.finishDate || a.startDate} conflicts with data date (${todayStr})`,
-    })),
+    affectedActivities: invalidDates.map((a) =>
+      mapActivityItem(a, `Forecast date ${a.finishDate || a.startDate} conflicts with data date (${todayStr})`)
+    ),
   });
 
-  // 11. Resource Loading
-  // Target: > 80% for fully loaded project schedules
+  // 11. Resource Loading (Full list - no truncation)
   const resourceLoaded = activities.filter((a) => a.type === 'TT_Task' && a.assignments.length > 0);
   const tasksCount = activities.filter((a) => a.type === 'TT_Task').length || 1;
   const resourcePct = Math.round((resourceLoaded.length / tasksCount) * 1000) / 10;
@@ -978,13 +964,7 @@ export function performDcmaAudit(
     severity: resourcePct >= 80 ? 'pass' : resourcePct >= 50 ? 'warning' : 'fail',
     affectedActivities: activities
       .filter((a) => a.type === 'TT_Task' && a.assignments.length === 0)
-      .slice(0, 50)
-      .map((a) => ({
-        id: a.id,
-        code: a.code,
-        name: a.name,
-        reason: 'No resource or crew assigned',
-      })),
+      .map((a) => mapActivityItem(a, 'No resource or crew assigned')),
   });
 
   // 12. Missed Activities (Scheduled to finish before data date but incomplete)
@@ -1003,15 +983,12 @@ export function performDcmaAudit(
     totalCount: total,
     actualPct: missedTasksPct,
     severity: missedTasksPct === 0 ? 'pass' : missedTasksPct <= 5 ? 'warning' : 'fail',
-    affectedActivities: missedTasks.map((a) => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      reason: `Planned finish was ${a.targetFinishDate}; still ${a.status.replace('TK_', '')}`,
-    })),
+    affectedActivities: missedTasks.map((a) =>
+      mapActivityItem(a, `Planned finish was ${a.targetFinishDate}; still ${a.status.replace('TK_', '')}`)
+    ),
   });
 
-  // 13. Critical Path Continuity
+  // 13. Critical Path Continuity (Full list - no truncation)
   const criticalTasks = activities.filter((a) => a.isCritical);
   const hasCritical = criticalTasks.length > 0;
   checks.push({
@@ -1025,12 +1002,9 @@ export function performDcmaAudit(
     totalCount: total,
     actualPct: Math.round((criticalTasks.length / total) * 1000) / 10,
     severity: hasCritical ? 'pass' : 'warning',
-    affectedActivities: criticalTasks.slice(0, 30).map((a) => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      reason: `Critical activity with Total Float = ${a.totalFloatDays}d`,
-    })),
+    affectedActivities: criticalTasks.map((a) =>
+      mapActivityItem(a, `Critical activity with Total Float = ${a.totalFloatDays}d`)
+    ),
   });
 
   // 14. Float Consistency
@@ -1046,12 +1020,9 @@ export function performDcmaAudit(
     totalCount: total,
     actualPct: Math.round(((total - anomalousFloat.length) / total) * 1000) / 10,
     severity: anomalousFloat.length === 0 ? 'pass' : 'fail',
-    affectedActivities: anomalousFloat.map((a) => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      reason: `Free Float (${a.freeFloatDays}d) > Total Float (${a.totalFloatDays}d)`,
-    })),
+    affectedActivities: anomalousFloat.map((a) =>
+      mapActivityItem(a, `Free Float (${a.freeFloatDays}d) > Total Float (${a.totalFloatDays}d)`)
+    ),
   });
 
   // Score calculation

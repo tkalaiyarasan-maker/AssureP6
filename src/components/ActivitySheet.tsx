@@ -2,8 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { Activity, ParsedProject } from '../types/xer';
 import {
   Search,
-  Filter,
-  Download,
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
@@ -12,18 +10,21 @@ import {
   Clock,
   Circle,
   FileSpreadsheet,
+  GitBranch,
 } from 'lucide-react';
 
 interface ActivitySheetProps {
   project: ParsedProject;
   onSelectActivity: (activity: Activity) => void;
   selectedActivityId?: string;
+  onTraceBackward?: (activity: Activity) => void;
 }
 
 type SortField =
   | 'code'
   | 'name'
   | 'status'
+  | 'calendarName'
   | 'origDurationDays'
   | 'remainDurationDays'
   | 'physCompletePct'
@@ -35,11 +36,13 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
   project,
   onSelectActivity,
   selectedActivityId,
+  onTraceBackward,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'TK_NotStart' | 'TK_Active' | 'TK_Complete'>('all');
   const [criticalOnly, setCriticalOnly] = useState(false);
   const [milestonesOnly, setMilestonesOnly] = useState(false);
+  const [calendarFilter, setCalendarFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('startDate');
   const [sortAsc, setSortAsc] = useState(true);
 
@@ -52,16 +55,18 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
           return false;
         }
         if (statusFilter !== 'all' && act.status !== statusFilter) return false;
+        if (calendarFilter !== 'all' && act.calendarId !== calendarFilter) return false;
 
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
           const matchesCode = act.code.toLowerCase().includes(q);
           const matchesName = act.name.toLowerCase().includes(q);
           const matchesWbs = (act.wbsPath || act.wbsName).toLowerCase().includes(q);
+          const matchesCal = (act.calendarName || '').toLowerCase().includes(q);
           const matchesResource = act.assignments.some(
             (a) => a.resourceCode.toLowerCase().includes(q) || a.resourceName.toLowerCase().includes(q)
           );
-          if (!matchesCode && !matchesName && !matchesWbs && !matchesResource) return false;
+          if (!matchesCode && !matchesName && !matchesWbs && !matchesCal && !matchesResource) return false;
         }
 
         return true;
@@ -77,7 +82,7 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
         if (valA > valB) return sortAsc ? 1 : -1;
         return 0;
       });
-  }, [project.activities, searchQuery, statusFilter, criticalOnly, milestonesOnly, sortField, sortAsc]);
+  }, [project.activities, searchQuery, statusFilter, criticalOnly, milestonesOnly, calendarFilter, sortField, sortAsc]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -94,7 +99,9 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
       'Activity ID',
       'Activity Name',
       'Status',
-      'WBS Path',
+      'WBS Hierarchy',
+      'Assigned Calendar',
+      'Calendar Type',
       'Orig Duration (Days)',
       'Remain Duration (Days)',
       'Physical % Complete',
@@ -112,6 +119,8 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
       `"${act.name.replace(/"/g, '""')}"`,
       act.status.replace('TK_', ''),
       `"${(act.wbsPath || act.wbsName).replace(/"/g, '""')}"`,
+      `"${(act.calendarName || 'Unassigned').replace(/"/g, '""')}"`,
+      act.calendarType === 'CA_Project' ? 'Project' : act.calendarType === 'CA_Rsrc' ? 'Resource' : 'Global',
       act.origDurationDays,
       act.remainDurationDays,
       act.physCompletePct,
@@ -125,7 +134,7 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
     ]);
 
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
@@ -220,6 +229,23 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
           >
             Milestones ({project.stats.milestoneCount})
           </button>
+
+          {/* Calendar Filter Dropdown */}
+          {project.calendars.length > 0 && (
+            <select
+              value={calendarFilter}
+              onChange={(e) => setCalendarFilter(e.target.value)}
+              className="px-2.5 py-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-700 dark:text-slate-200 text-xs focus:outline-none focus:border-amber-500 max-w-[200px]"
+              title="Filter activities by assigned calendar"
+            >
+              <option value="all">All Calendars ({project.calendars.length})</option>
+              {project.calendars.map((cal) => (
+                <option key={cal.id} value={cal.id}>
+                  {cal.name} [{cal.typeLabel}]
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Export CSV Button */}
@@ -275,7 +301,21 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
                 </div>
               </th>
 
-              <th className="py-3 px-3 text-slate-400 min-w-[140px]">WBS Node</th>
+              <th className="py-3 px-3 text-slate-500 dark:text-slate-400 min-w-[170px]">WBS Hierarchy</th>
+
+              <th
+                onClick={() => handleSort('calendarName')}
+                className="py-3 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 min-w-[160px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Assigned Calendar</span>
+                  {sortField === 'calendarName' ? (
+                    sortAsc ? <ChevronUp className="w-3.5 h-3.5 text-amber-400" /> : <ChevronDown className="w-3.5 h-3.5 text-amber-400" />
+                  ) : (
+                    <ArrowUpDown className="w-3 h-3 text-slate-500" />
+                  )}
+                </div>
+              </th>
 
               <th
                 onClick={() => handleSort('origDurationDays')}
@@ -335,15 +375,16 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
                 </div>
               </th>
 
-              <th className="py-3 px-3 text-slate-400">Predecessors</th>
-              <th className="py-3 px-3 text-slate-400">Successors</th>
-              <th className="py-3 px-3 text-slate-400">Assigned Resources</th>
+              <th className="py-3 px-3 text-slate-500 dark:text-slate-400">Predecessors</th>
+              <th className="py-3 px-3 text-slate-500 dark:text-slate-400">Successors</th>
+              <th className="py-3 px-3 text-slate-500 dark:text-slate-400">Assigned Resources</th>
+              {onTraceBackward && <th className="py-3 px-3 text-right text-slate-500 dark:text-slate-400">Path</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
             {filteredAndSortedActivities.length === 0 ? (
               <tr>
-                <td colSpan={12} className="py-12 text-center text-slate-500 font-sans">
+                <td colSpan={onTraceBackward ? 14 : 13} className="py-12 text-center text-slate-500 font-sans">
                   No activities found matching criteria.
                 </td>
               </tr>
@@ -401,9 +442,23 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
                       )}
                     </td>
 
-                    {/* WBS */}
-                    <td className="py-2.5 px-3 font-sans text-slate-600 dark:text-slate-400 truncate max-w-[160px] text-[11px]">
-                      {act.wbsName}
+                    {/* WBS Hierarchy */}
+                    <td className="py-2.5 px-3 font-sans text-slate-600 dark:text-slate-400 truncate max-w-[200px] text-[11px]" title={act.wbsPath || act.wbsName}>
+                      {act.wbsPath || act.wbsName}
+                    </td>
+
+                    {/* Assigned Calendar */}
+                    <td className="py-2.5 px-3 font-sans text-[11px] whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate max-w-[140px] text-slate-800 dark:text-slate-200 font-medium" title={act.calendarName || 'Unassigned'}>
+                          {act.calendarName || 'Unassigned'}
+                        </span>
+                        {act.calendarType && (
+                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            {act.calendarType === 'CA_Project' ? 'Proj' : act.calendarType === 'CA_Rsrc' ? 'Rsrc' : 'Global'}
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Orig Duration */}
@@ -471,6 +526,23 @@ export const ActivitySheet: React.FC<ActivitySheetProps> = ({
                         act.assignments.map((a) => a.resourceCode).join(', ')
                       )}
                     </td>
+
+                    {/* Backward Path Action */}
+                    {onTraceBackward && (
+                      <td className="py-2.5 px-3 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onTraceBackward(act);
+                          }}
+                          title="Trace Backward Path from this activity"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-[10.5px] font-sans font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
+                        >
+                          <GitBranch className="w-3 h-3" />
+                          Trace
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })

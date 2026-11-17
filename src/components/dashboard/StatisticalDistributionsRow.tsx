@@ -1,12 +1,14 @@
 import React from 'react';
 import { P6HealthCheckDashboardData } from '../../types/healthCheck';
-import { BarChart3, ScatterChart as ScatterIcon, Layers, Users, Calendar } from 'lucide-react';
+import { ScatterChart as ScatterIcon, ArrowUpRight } from 'lucide-react';
+import { DashboardNavigationRequest } from './ExecutiveScoreCards';
 
 interface StatisticalDistributionsRowProps {
   data: P6HealthCheckDashboardData;
+  onNavigate?: (req: DashboardNavigationRequest) => void;
 }
 
-export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowProps> = ({ data }) => {
+export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowProps> = ({ data, onNavigate }) => {
   const { statisticalDistributions } = data;
   const {
     remainingDurationRanges,
@@ -43,11 +45,9 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
 
               return (
                 <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group">
-                  {/* Number label above bar */}
                   <span className="text-[9.5px] font-mono text-slate-700 dark:text-slate-300 font-semibold mb-1 tabular-nums">
                     {item.count > 0 ? item.count.toLocaleString() : '0'}
                   </span>
-                  {/* Bar */}
                   <div
                     style={{ height: `${heightPct}%` }}
                     className={`w-full rounded-t transition-all ${
@@ -56,7 +56,6 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
                         : 'bg-emerald-600 hover:bg-emerald-500'
                     }`}
                   />
-                  {/* Range label */}
                   <span className="text-[8.5px] text-slate-600 dark:text-slate-400 mt-1 font-mono text-center truncate w-full" title={item.range}>
                     {item.range}
                   </span>
@@ -153,12 +152,19 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
       {/* Row 2: Resources Breakdown & Calendar Assignment Strip */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Resources and Assignment */}
-        <div className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+        <button
+          type="button"
+          onClick={() => onNavigate?.({ workspaceTab: 'resources' })}
+          className="text-left p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 hover:border-emerald-400 rounded-xl shadow-sm transition-colors group cursor-pointer"
+          title="Click to open Resource Inspector"
+        >
           <div className="pb-2 border-b border-slate-200/80 dark:border-slate-800/60 mb-3 flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Resources and Assignment
             </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Counts &amp; Assignments</span>
+            <span className="inline-flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-mono group-hover:text-emerald-600">
+              Inspect Resources <ArrowUpRight className="w-3 h-3" />
+            </span>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
@@ -186,15 +192,22 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
               );
             })}
           </div>
-        </div>
+        </button>
 
         {/* Calendar Assignment */}
-        <div className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+        <button
+          type="button"
+          onClick={() => onNavigate?.({ dashboardSubTab: 'calendars' })}
+          className="text-left p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 hover:border-amber-400 rounded-xl shadow-sm transition-colors group cursor-pointer"
+          title="Click to inspect Calendars, Holidays & Monsoon Non-Working Periods"
+        >
           <div className="pb-2 border-b border-slate-200/80 dark:border-slate-800/60 mb-3 flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Calendar Assignment
             </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Types &amp; Usage</span>
+            <span className="inline-flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-mono group-hover:text-amber-600">
+              View Calendars &amp; Holidays <ArrowUpRight className="w-3 h-3" />
+            </span>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
@@ -213,7 +226,7 @@ export const StatisticalDistributionsRow: React.FC<StatisticalDistributionsRowPr
               </div>
             ))}
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Row 3: Scatter Plot - Total Float Vs Remaining Duration (d) */}

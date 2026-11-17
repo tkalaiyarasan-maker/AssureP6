@@ -1,12 +1,17 @@
 import React from 'react';
 import { P6HealthCheckDashboardData } from '../../types/healthCheck';
+import { DashboardNavigationRequest } from './ExecutiveScoreCards';
 
 interface ProjectMetaAndCountsProps {
   data: P6HealthCheckDashboardData;
+  onNavigate?: (req: DashboardNavigationRequest) => void;
 }
 
-export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data }) => {
+export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data, onNavigate }) => {
   const { projectDetails, counts } = data;
+  const showMustFinishBy =
+    Boolean(projectDetails.mustFinishBy) &&
+    projectDetails.mustFinishBy !== projectDetails.projectFinish;
 
   return (
     <div className="space-y-3">
@@ -42,14 +47,23 @@ export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data
           </div>
         </div>
 
-        {/* Project Finish */}
-        <div className="space-y-1">
+        {/* Scheduled Project Completion */}
+        <div className="space-y-1" title={projectDetails.completionSourceNote || 'Calculated CPM Completion Date'}>
           <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400 block tracking-wider">
-            Project Finish
+            Scheduled Finish
           </span>
-          <div className="py-1 font-mono text-slate-800 dark:text-slate-200 text-xs font-semibold">
-            {projectDetails.projectFinish}
+          <div className="py-1 font-mono text-slate-900 dark:text-slate-100 text-xs font-bold">
+            {projectDetails.scheduledFinish || projectDetails.projectFinish}
           </div>
+          {showMustFinishBy ? (
+            <span className="text-[9.5px] font-mono text-amber-700 dark:text-amber-400 block">
+              Must Finish By: {projectDetails.mustFinishBy}
+            </span>
+          ) : projectDetails.completionSourceNote ? (
+            <span className="text-[9.5px] text-slate-500 dark:text-slate-400 block truncate">
+              {projectDetails.completionSourceNote}
+            </span>
+          ) : null}
         </div>
 
         {/* Data Date */}
@@ -83,10 +97,15 @@ export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data
         </div>
       </div>
 
-      {/* 2. Schedule Counts Strip */}
+      {/* 2. Schedule Counts Strip (Clickable Navigation) */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 p-3 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl text-center shadow-sm">
         {/* Total Activities */}
-        <div className="p-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-slate-200/80 dark:border-slate-800/80">
+        <button
+          type="button"
+          onClick={() => onNavigate?.({ workspaceTab: 'activities' })}
+          className="p-2.5 bg-slate-50 hover:bg-amber-50/70 dark:bg-slate-950/60 dark:hover:bg-slate-800/80 rounded-lg border border-slate-200/80 hover:border-amber-400 dark:border-slate-800/80 transition-colors cursor-pointer"
+          title="Open Activity Sheet"
+        >
           <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
             Total Activities
           </span>
@@ -96,10 +115,15 @@ export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data
           <span className="text-[10px] text-slate-500 block font-mono">
             {counts.incompleteActivities.toLocaleString()} incomplete
           </span>
-        </div>
+        </button>
 
         {/* Total WBS Nodes */}
-        <div className="p-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-slate-200/80 dark:border-slate-800/80">
+        <button
+          type="button"
+          onClick={() => onNavigate?.({ workspaceTab: 'wbs' })}
+          className="p-2.5 bg-slate-50 hover:bg-amber-50/70 dark:bg-slate-950/60 dark:hover:bg-slate-800/80 rounded-lg border border-slate-200/80 hover:border-amber-400 dark:border-slate-800/80 transition-colors cursor-pointer"
+          title="Open WBS Hierarchy Tree"
+        >
           <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
             Total WBS Nodes
           </span>
@@ -109,10 +133,15 @@ export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data
           <span className="text-[10px] text-slate-500 block">
             Work Breakdown Structure
           </span>
-        </div>
+        </button>
 
         {/* Total Relationships */}
-        <div className="p-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-slate-200/80 dark:border-slate-800/80">
+        <button
+          type="button"
+          onClick={() => onNavigate?.({ workspaceTab: 'gantt' })}
+          className="p-2.5 bg-slate-50 hover:bg-amber-50/70 dark:bg-slate-950/60 dark:hover:bg-slate-800/80 rounded-lg border border-slate-200/80 hover:border-amber-400 dark:border-slate-800/80 transition-colors cursor-pointer"
+          title="Inspect Relationships in Gantt Chart"
+        >
           <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
             Total Relationships
           </span>
@@ -122,10 +151,15 @@ export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data
           <span className="text-[10px] text-slate-500 block font-mono">
             FS {counts.fsSharePct}% | FS Density {counts.fsDensity}
           </span>
-        </div>
+        </button>
 
         {/* Total Resources */}
-        <div className="p-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-slate-200/80 dark:border-slate-800/80">
+        <button
+          type="button"
+          onClick={() => onNavigate?.({ workspaceTab: 'resources' })}
+          className="p-2.5 bg-slate-50 hover:bg-amber-50/70 dark:bg-slate-950/60 dark:hover:bg-slate-800/80 rounded-lg border border-slate-200/80 hover:border-amber-400 dark:border-slate-800/80 transition-colors cursor-pointer"
+          title="Open Resource Inspector"
+        >
           <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
             Total Resources
           </span>
@@ -135,10 +169,15 @@ export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data
           <span className="text-[10px] text-slate-500 block">
             labor + nonlabor + material
           </span>
-        </div>
+        </button>
 
         {/* Negative Float Activities */}
-        <div className="p-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-slate-200/80 dark:border-slate-800/80">
+        <button
+          type="button"
+          onClick={() => onNavigate?.({ dashboardSubTab: 'paths' })}
+          className="p-2.5 bg-slate-50 hover:bg-amber-50/70 dark:bg-slate-950/60 dark:hover:bg-slate-800/80 rounded-lg border border-slate-200/80 hover:border-amber-400 dark:border-slate-800/80 transition-colors cursor-pointer"
+          title="Inspect Longest & Driving Paths"
+        >
           <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
             Negative Float Activities
           </span>
@@ -150,12 +189,17 @@ export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data
             {counts.negativeFloatActivities}
           </span>
           <span className="text-[10px] text-slate-500 block font-mono">
-            {((counts.negativeFloatActivities / counts.totalActivities) * 100).toFixed(1)}% of incomplete
+            {counts.totalActivities > 0 ? ((counts.negativeFloatActivities / counts.totalActivities) * 100).toFixed(1) : '0.0'}% of total
           </span>
-        </div>
+        </button>
 
         {/* Critical Path Activities */}
-        <div className="p-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-slate-200/80 dark:border-slate-800/80">
+        <button
+          type="button"
+          onClick={() => onNavigate?.({ dashboardSubTab: 'paths' })}
+          className="p-2.5 bg-slate-50 hover:bg-amber-50/70 dark:bg-slate-950/60 dark:hover:bg-slate-800/80 rounded-lg border border-slate-200/80 hover:border-amber-400 dark:border-slate-800/80 transition-colors cursor-pointer"
+          title="Open Longest & Subsequent Paths Validator"
+        >
           <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
             Critical Path Activities
           </span>
@@ -165,8 +209,9 @@ export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data
           <span className="text-[10px] text-slate-500 block font-mono">
             {counts.criticalPathPct}% of all activities
           </span>
-        </div>
+        </button>
       </div>
     </div>
   );
 };
+

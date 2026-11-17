@@ -44,6 +44,13 @@ export interface HealthCheckParameter {
   passRule: string;
   whereToCheck: string;
   limitAtFail?: string;
+  description?: string;
+  navigationTarget?: {
+    workspaceTab?: 'healthDashboard' | 'gantt' | 'activities' | 'wbs' | 'dcma' | 'resources';
+    dashboardSubTab?: 'overview' | 'insights' | 'distributions' | 'checklist' | 'ranked' | 'milestones' | 'obligations' | 'calendars' | 'paths';
+    dcmaCheckId?: number;
+    label?: string;
+  };
   
   affectedActivities?: { id: string; code: string; name: string; reason: string }[];
 }
@@ -94,6 +101,12 @@ export interface ScheduleInsightItem {
   value: string | number;
   formula: string;
   status?: 'healthy' | 'warning' | 'critical' | 'neutral';
+  description?: string;
+  navigationTarget?: {
+    workspaceTab?: 'healthDashboard' | 'gantt' | 'activities' | 'wbs' | 'dcma' | 'resources';
+    dashboardSubTab?: 'overview' | 'insights' | 'distributions' | 'checklist' | 'ranked' | 'milestones' | 'obligations' | 'calendars' | 'paths';
+    themeFilter?: ThemeCategory;
+  };
 }
 
 export interface ScheduleInsightsData {
@@ -112,9 +125,11 @@ export interface P6HealthCheckDashboardData {
     dataDate: string;
     projectStart: string;
     projectFinish: string;
+    scheduledFinish?: string;
     mustFinishBy?: string;
     contractStart: string;
     contractCompletion: string;
+    completionSourceNote?: string;
     reviewer: string;
     reviewDate: string;
   };

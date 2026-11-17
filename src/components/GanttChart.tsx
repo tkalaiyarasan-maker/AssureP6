@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Activity, ParsedProject } from '../types/xer';
+import { downloadCsvFile, sortActivitiesChronologically } from '../utils/scheduleAnalysis';
 import {
   Search,
   Eye,
@@ -8,27 +9,32 @@ import {
   ZoomOut,
   Flame,
   Route,
-  Layers,
-  ChevronRight,
-  ChevronDown,
+  ArrowUpDown,
+  Download,
+  GitBranch,
 } from 'lucide-react';
 
 interface GanttChartProps {
   project: ParsedProject;
   onSelectActivity: (activity: Activity) => void;
   selectedActivityId?: string;
+  onTraceBackward?: (activity: Activity) => void;
 }
 
 export type TimeScale = 'day' | 'week' | 'month' | 'quarter' | 'year';
 export type GanttFilterMode = 'all' | 'critical' | 'longest';
+export type GanttSortMode = 'default' | 'startAsc' | 'finishAsc' | 'floatAsc' | 'wbs';
 
 export const GanttChart: React.FC<GanttChartProps> = ({
   project,
   onSelectActivity,
   selectedActivityId,
+  onTraceBackward,
 }) => {
   const [timeScale, setTimeScale] = useState<TimeScale>('month');
   const [filterMode, setFilterMode] = useState<GanttFilterMode>('all');
+  const [sortMode, setSortMode] = useState<GanttSortMode>('default');
+  const [selectedPathRank, setSelectedPathRank] = useState<number>(1);
   const [showLogicLinks, setShowLogicLinks] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [hoveredActivityId, setHoveredActivityId] = useState<string | null>(null);
@@ -53,25 +59,76 @@ export const GanttChart: React.FC<GanttChartProps> = ({
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // Filter activities
+  const activeLongestChain = useMemo(() => {
+    return project.longestPaths.find((c) => c.rank === selectedPathRank) || project.longestPaths[0];
+  }, [project.longestPaths, selectedPathRank]);
+
+  const activeChainIdSet = useMemo(() => {
+    if (!activeLongestChain) return new Set<string>();
+    return new Set(activeLongestChain.activityIds);
+  }, [activeLongestChain]);
+
+  // Filter & sort activities
   const filteredActivities = useMemo(() => {
-    return project.activities.filter((act) => {
+    const base = project.activities.filter((act) => {
       if (filterMode === 'critical' && !act.isCritical) return false;
-      if (filterMode === 'longest' && !act.isLongestPath) return false;
+      if (filterMode === 'longest') {
+        if (project.longestPaths.length > 0) {
+          if (!activeChainIdSet.has(act.id)) return false;
+        } else if (!act.isLongestPath) {
+          return false;
+        }
+      }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesCode = act.code.toLowerCase().includes(q);
         const matchesName = act.name.toLowerCase().includes(q);
-        const matchesWbs = act.wbsName.toLowerCase().includes(q);
-        if (!matchesCode && !matchesName && !matchesWbs) return false;
+        const matchesWbs = (act.wbsPath || act.wbsName).toLowerCase().includes(q);
+        const matchesCal = (act.calendarName || '').toLowerCase().includes(q);
+        if (!matchesCode && !matchesName && !matchesWbs && !matchesCal) return false;
       }
       return true;
     });
-  }, [project.activities, filterMode, searchQuery]);
+
+    if (sortMode === 'startAsc') return sortActivitiesChronologically(base, 'start');
+    if (sortMode === 'finishAsc') return sortActivitiesChronologically(base, 'finish');
+    if (sortMode === 'floatAsc') return sortActivitiesChronologically(base, 'float');
+    if (sortMode === 'wbs') {
+      return [...base].sort((a, b) => (a.wbsPath || a.wbsName).localeCompare(b.wbsPath || b.wbsName) || (a.startDate || '').localeCompare(b.startDate || ''));
+    }
+    return base;
+  }, [project.activities, project.longestPaths.length, activeChainIdSet, filterMode, searchQuery, sortMode]);
 
   const longestPathCount = useMemo(() => {
     return project.activities.filter((a) => a.isLongestPath).length;
   }, [project.activities]);
+
+  const handleSelectLongestMode = () => {
+    setFilterMode('longest');
+    setSelectedPathRank(1);
+    if (sortMode === 'default') {
+      setSortMode('startAsc');
+    }
+  };
+
+  const handleExportVisibleGanttCsv = () => {
+    downloadCsvFile(
+      `${project.metadata.code}_Gantt_${filterMode === 'longest' ? `Path${selectedPathRank}` : filterMode}.csv`,
+      ['Activity ID', 'Activity Name', 'WBS Hierarchy', 'Assigned Calendar', 'Start Date', 'Finish Date', 'Duration (d)', 'Total Float (d)', '% Complete', 'Longest Path'],
+      filteredActivities.map((a) => [
+        a.code,
+        a.name,
+        a.wbsPath || a.wbsName,
+        a.calendarName || 'Unassigned',
+        a.startDate || '',
+        a.finishDate || '',
+        a.origDurationDays,
+        a.totalFloatDays,
+        a.physCompletePct,
+        a.isLongestPath ? 'Primary' : activeChainIdSet.has(a.id) ? `Path #${selectedPathRank}` : 'No',
+      ])
+    );
+  };
 
   // Determine timeline boundary
   const { timelineStart, timelineEnd, totalDays } = useMemo(() => {
@@ -115,7 +172,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   }, [timeScale]);
 
   const timelineWidth = Math.max(900, totalDays * pxPerDay);
-  const rowHeight = 36;
+  const rowHeight = 44;
 
   // Zoom cycling helper
   const zoomLevels: TimeScale[] = ['day', 'week', 'month', 'quarter', 'year'];
@@ -339,17 +396,17 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-lg transition-colors">
       {/* Gantt Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-xs">
-        <div className="flex flex-wrap items-center gap-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-xs">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Search Bar */}
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search ID, Name or WBS..."
+              placeholder="Search ID, Name, WBS, Cal..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-amber-500 w-52 text-xs"
+              className="pl-8 pr-3 py-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-amber-500 w-48 text-xs"
             />
           </div>
 
@@ -377,7 +434,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
               Critical ({project.stats.criticalCount})
             </button>
             <button
-              onClick={() => setFilterMode('longest')}
+              onClick={handleSelectLongestMode}
               className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
                 filterMode === 'longest'
                   ? 'bg-amber-500 text-slate-950 shadow-sm'
@@ -389,10 +446,43 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             </button>
           </div>
 
+          {/* Subsequent Path Selector when Longest Path is active */}
+          {filterMode === 'longest' && project.longestPaths.length > 0 && (
+            <select
+              value={selectedPathRank}
+              onChange={(e) => setSelectedPathRank(Number(e.target.value))}
+              className="px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700 text-amber-950 dark:text-amber-200 font-semibold text-xs focus:outline-none"
+              title="Select Primary or Subsequent Longest Path"
+            >
+              {project.longestPaths.map((chain) => (
+                <option key={chain.rank} value={chain.rank}>
+                  {chain.name} ({chain.activityIds.length} acts)
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Chronological Sort Selector */}
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg px-2 py-1">
+            <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+            <select
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as GanttSortMode)}
+              className="bg-transparent text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none"
+              title="Sort Gantt & Longest Path Activities"
+            >
+              <option value="default">Sort: XER Order</option>
+              <option value="startAsc">Sort: Start Date ↑ (Chronological)</option>
+              <option value="finishAsc">Sort: Finish Date ↑ (Chronological)</option>
+              <option value="floatAsc">Sort: Total Float ↑</option>
+              <option value="wbs">Sort: WBS Hierarchy</option>
+            </select>
+          </div>
+
           {/* Logic Links Toggle */}
           <button
             onClick={() => setShowLogicLinks(!showLogicLinks)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
               showLogicLinks
                 ? 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700'
                 : 'bg-white dark:bg-slate-950 text-slate-500 border-slate-300 dark:border-slate-800 hover:text-slate-700 dark:hover:text-slate-300'
@@ -403,8 +493,17 @@ export const GanttChart: React.FC<GanttChartProps> = ({
           </button>
         </div>
 
-        {/* Primavera-Style Zoom Controls (Day, Week, Month, Quarter, Year) */}
+        {/* Primavera-Style Zoom Controls + Export */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportVisibleGanttCsv}
+            title="Export current Gantt / Path table with WBS Hierarchy & Calendar to CSV"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-medium transition-colors"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span className="hidden lg:inline">CSV</span>
+          </button>
+
           {/* Zoom In / Out Buttons */}
           <div className="flex items-center border border-slate-300 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-950">
             <button
@@ -443,24 +542,47 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             ))}
           </div>
 
-          {/* Quick Stats Pill */}
           <span className="hidden xl:inline text-[11px] font-mono text-slate-500 dark:text-slate-400 px-2 py-1 bg-slate-100 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800">
             {filteredActivities.length} Tasks
           </span>
         </div>
       </div>
 
+      {/* Validation Banner when Longest Path is active */}
+      {filterMode === 'longest' && activeLongestChain && (
+        <div className="px-4 py-1.5 bg-amber-50/90 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900/50 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+          <div className="flex items-center gap-2 text-amber-950 dark:text-amber-200">
+            <span className="font-bold">{activeLongestChain.name}</span>
+            <span>·</span>
+            <span className="font-mono">
+              {activeLongestChain.startDate || '—'} → {activeLongestChain.finishDate || '—'} ({activeLongestChain.spanDays}d span)
+            </span>
+            {activeLongestChain.mergesIntoActivityCode && (
+              <>
+                <span>·</span>
+                <span>Merges into Path #{activeLongestChain.mergesIntoPathRank} ({activeLongestChain.mergesIntoActivityCode})</span>
+              </>
+            )}
+          </div>
+          <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+            {activeLongestChain.validationStatus}: {activeLongestChain.validationNotes[0]}
+          </span>
+        </div>
+      )}
+
       {/* Main Gantt Split View */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Left Frozen Table Columns */}
-        <div className="w-[410px] lg:w-[480px] shrink-0 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-950 z-10">
+        {/* Left Frozen Table Columns (Expanded for WBS Hierarchy, Calendar & Dates) */}
+        <div className="w-[520px] xl:w-[640px] shrink-0 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-950 z-10">
           {/* Header Row */}
-          <div className="flex items-center h-12 px-3 border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-[11px] font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider select-none shrink-0 shadow-xs">
-            <div className="w-24">Act ID</div>
-            <div className="flex-1 px-2">Activity Name</div>
-            <div className="w-14 text-right">Dur</div>
-            <div className="w-16 text-right">Float</div>
-            <div className="w-12 text-right">%</div>
+          <div className="flex items-center h-12 px-3 border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-[10.5px] font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider select-none shrink-0 shadow-xs">
+            <div className="w-20 shrink-0">Act ID</div>
+            <div className="flex-1 px-2 min-w-0">Activity Name &amp; WBS Hierarchy</div>
+            <div className="w-28 px-1.5 hidden xl:block truncate">Calendar</div>
+            <div className="w-20 text-right shrink-0">Start</div>
+            <div className="w-20 text-right shrink-0">Finish</div>
+            <div className="w-12 text-right shrink-0">Float</div>
+            {onTraceBackward && <div className="w-12 text-right shrink-0">Trace</div>}
           </div>
 
           {/* Virtualized Body Rows */}
@@ -497,37 +619,58 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                     }`}
                   >
                     {/* Activity Code */}
-                    <div className="w-24 truncate font-semibold text-amber-700 dark:text-amber-400">
+                    <div className="w-20 shrink-0 truncate font-semibold text-amber-700 dark:text-amber-400 text-[11px]">
                       {act.code}
                     </div>
 
-                    {/* Activity Name + Badges */}
-                    <div className="flex-1 px-2 truncate font-sans text-xs flex items-center gap-1.5">
-                      {act.isLongestPath && (
-                        <span
-                          className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
-                          title="Longest Driving Path"
-                        />
-                      )}
-                      {act.isCritical && (
-                        <span
-                          className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"
-                          title="Critical Path (Total Float <= 0)"
-                        />
-                      )}
-                      <span className="truncate text-slate-900 dark:text-slate-100 font-medium">
-                        {act.name}
+                    {/* Activity Name + Full WBS Hierarchy */}
+                    <div className="flex-1 px-2 min-w-0 font-sans flex flex-col justify-center">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {act.isLongestPath && (
+                          <span
+                            className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
+                            title="Primary Longest Path"
+                          />
+                        )}
+                        {act.isCritical && (
+                          <span
+                            className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"
+                            title="Critical Path (Total Float <= 0)"
+                          />
+                        )}
+                        <span className="truncate text-slate-900 dark:text-slate-100 font-medium text-xs leading-tight">
+                          {act.name}
+                        </span>
+                      </div>
+                      <span
+                        className="truncate text-[10px] text-slate-500 dark:text-slate-400 leading-tight"
+                        title={act.wbsPath || act.wbsName}
+                      >
+                        {act.wbsPath || act.wbsName}
                       </span>
                     </div>
 
-                    {/* Duration in Days */}
-                    <div className="w-14 text-right tabular-nums text-slate-600 dark:text-slate-400 text-[11px]">
-                      {act.origDurationDays}d
+                    {/* Calendar */}
+                    <div
+                      className="w-28 px-1.5 hidden xl:block truncate font-sans text-[10.5px] text-slate-600 dark:text-slate-400"
+                      title={`${act.calendarName || 'Unassigned'} (${act.calendarType === 'CA_Project' ? 'Project' : act.calendarType === 'CA_Rsrc' ? 'Resource' : 'Global'})`}
+                    >
+                      {act.calendarName || 'Unassigned'}
+                    </div>
+
+                    {/* Start */}
+                    <div className="w-20 shrink-0 text-right tabular-nums text-slate-600 dark:text-slate-400 text-[10.5px]">
+                      {act.startDate || '—'}
+                    </div>
+
+                    {/* Finish */}
+                    <div className="w-20 shrink-0 text-right tabular-nums text-slate-600 dark:text-slate-400 text-[10.5px]">
+                      {act.finishDate || '—'}
                     </div>
 
                     {/* Total Float */}
                     <div
-                      className={`w-16 text-right tabular-nums text-[11px] ${
+                      className={`w-12 shrink-0 text-right tabular-nums text-[11px] ${
                         act.totalFloatDays <= 0
                           ? 'text-rose-600 dark:text-rose-400 font-bold'
                           : 'text-slate-600 dark:text-slate-400'
@@ -536,10 +679,21 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                       {act.totalFloatDays}d
                     </div>
 
-                    {/* Progress % */}
-                    <div className="w-12 text-right tabular-nums text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">
-                      {act.physCompletePct}%
-                    </div>
+                    {/* Quick Backward Path Trace */}
+                    {onTraceBackward && (
+                      <div className="w-12 shrink-0 flex justify-end">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onTraceBackward(act);
+                          }}
+                          title="Trace Backward Path for this activity"
+                          className="p-1 rounded hover:bg-amber-500/20 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                        >
+                          <GitBranch className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })

@@ -1,19 +1,19 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Activity,
   ParsedProject,
 } from '../types/xer';
+import { traceBackwardPath } from '../utils/scheduleAnalysis';
 import {
   X,
-  Clock,
   Calendar as CalendarIcon,
-  GitCommit,
   ArrowRight,
   ArrowLeft,
   Users,
   ShieldAlert,
   CheckCircle2,
   AlertTriangle,
+  GitBranch,
 } from 'lucide-react';
 
 interface ActivityDetailModalProps {
@@ -21,6 +21,7 @@ interface ActivityDetailModalProps {
   project: ParsedProject;
   onClose: () => void;
   onSelectActivity: (activity: Activity) => void;
+  onOpenBackwardTrace?: (activity: Activity) => void;
 }
 
 export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
@@ -28,7 +29,20 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
   project,
   onClose,
   onSelectActivity,
+  onOpenBackwardTrace,
 }) => {
+  const [showInlineBackward, setShowInlineBackward] = useState(false);
+
+  const assignedCalendar = useMemo(() => {
+    if (!activity) return undefined;
+    return project.calendars.find((c) => c.id === activity.calendarId);
+  }, [activity, project.calendars]);
+
+  const backwardTrace = useMemo(() => {
+    if (!activity || !showInlineBackward) return null;
+    return traceBackwardPath(project, activity.id);
+  }, [project, activity, showInlineBackward]);
+
   if (!activity) return null;
 
   const statusLabel =
@@ -40,10 +54,10 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
 
   const statusColor =
     activity.status === 'TK_Complete'
-      ? 'text-emerald-400 bg-emerald-950/60 border-emerald-800/60'
+      ? 'text-emerald-700 bg-emerald-50 border-emerald-300 dark:text-emerald-400 dark:bg-emerald-950/60 dark:border-emerald-800/60'
       : activity.status === 'TK_Active'
-      ? 'text-sky-400 bg-sky-950/60 border-sky-800/60'
-      : 'text-slate-400 bg-slate-900/60 border-slate-800';
+      ? 'text-sky-700 bg-sky-50 border-sky-300 dark:text-sky-400 dark:bg-sky-950/60 dark:border-sky-800/60'
+      : 'text-slate-600 bg-slate-100 border-slate-300 dark:text-slate-400 dark:bg-slate-900/60 dark:border-slate-800';
 
   return (
     <div
@@ -57,7 +71,7 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
           <div className="space-y-1">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30">
                 {activity.code}
               </span>
@@ -69,6 +83,24 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
                   <ShieldAlert className="w-3 h-3" />
                   Critical Path (TF: {activity.totalFloatDays}d)
                 </span>
+              )}
+              <button
+                onClick={() => setShowInlineBackward((v) => !v)}
+                className="flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full border font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 hover:bg-amber-100 transition-colors"
+              >
+                <GitBranch className="w-3 h-3" />
+                {showInlineBackward ? 'Hide Backward Path' : 'Trace Backward Path'}
+              </button>
+              {onOpenBackwardTrace && (
+                <button
+                  onClick={() => {
+                    onOpenBackwardTrace(activity);
+                    onClose();
+                  }}
+                  className="text-xs px-2.5 py-0.5 rounded-full border font-semibold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/50 border-sky-300 dark:border-sky-800 hover:bg-sky-100 transition-colors"
+                >
+                  Open in Full Path Tracer &rarr;
+                </button>
               )}
             </div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{activity.name}</h2>
@@ -86,6 +118,49 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
 
         {/* Content Body */}
         <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+          {/* Inline Backward Driving Path Preview */}
+          {showInlineBackward && backwardTrace && (
+            <div className="p-4 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                  <GitBranch className="w-4 h-4" />
+                  Driving Backward Path ({backwardTrace.drivingChain.length} steps | {backwardTrace.totalUpstreamCount} total upstream tasks)
+                </h3>
+                <span className="text-[11px] font-mono text-slate-600 dark:text-slate-400">
+                  Start &rarr; Selected Target ({activity.code})
+                </span>
+              </div>
+              <div className="max-h-48 overflow-y-auto divide-y divide-amber-200/60 dark:divide-amber-900/40 border border-amber-200 dark:border-amber-900/60 rounded-lg bg-white dark:bg-slate-950">
+                {backwardTrace.drivingChain.map((step, idx) => (
+                  <div
+                    key={step.activity.id}
+                    onClick={() => onSelectActivity(step.activity)}
+                    className="px-3 py-2 flex items-center justify-between gap-3 text-xs hover:bg-amber-50/60 dark:hover:bg-slate-900 cursor-pointer"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono text-slate-400">#{idx + 1}</span>
+                        <span className="font-mono font-bold text-amber-700 dark:text-amber-400">{step.activity.code}</span>
+                        <span className="font-medium text-slate-900 dark:text-slate-100 truncate">{step.activity.name}</span>
+                      </div>
+                      <div className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate">
+                        WBS: {step.activity.wbsPath || step.activity.wbsName} · Cal: {step.activity.calendarName || 'Unassigned'}
+                      </div>
+                    </div>
+                    <div className="text-right font-mono text-[11px] shrink-0">
+                      <div className="text-slate-700 dark:text-slate-300">
+                        {step.activity.startDate || '—'} &rarr; {step.activity.finishDate || '—'}
+                      </div>
+                      <div className="text-[10px] text-slate-500">
+                        TF: {step.activity.totalFloatDays}d {step.linkToSuccessorType ? `· ${step.linkToSuccessorType.replace('PR_', '')}${step.linkToSuccessorLagDays ? ` +${step.linkToSuccessorLagDays}d` : ''}` : ''}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Quick Metrics Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="p-3 bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800/80 rounded-lg">
@@ -144,7 +219,7 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
                   <tr>
-                    <td className="py-2.5 px-4 text-slate-700 dark:text-slate-300 font-sans font-medium">Current / Planned</td>
+                    <td className="py-2.5 px-4 text-slate-700 dark:text-slate-300 font-sans font-medium">Current / Scheduled</td>
                     <td className="py-2.5 px-4 text-slate-900 dark:text-slate-200 tabular-nums">{activity.startDate || '—'}</td>
                     <td className="py-2.5 px-4 text-slate-900 dark:text-slate-200 tabular-nums">{activity.finishDate || '—'}</td>
                     <td className="py-2.5 px-4 text-slate-500 dark:text-slate-400 font-sans text-[11px]">Active working dates</td>
@@ -325,7 +400,21 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-lg space-y-1">
               <span className="text-slate-500 dark:text-slate-400 block font-medium">Assigned Calendar</span>
-              <span className="text-slate-800 dark:text-slate-200 font-mono font-medium">{activity.calendarName || 'Standard 5-Day Workweek'}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-800 dark:text-slate-200 font-mono font-semibold">
+                  {activity.calendarName || 'Unassigned'}
+                </span>
+                {assignedCalendar && (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    {assignedCalendar.typeLabel} · {assignedCalendar.hoursPerDay}h/d
+                  </span>
+                )}
+              </div>
+              {assignedCalendar && (
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Working: {assignedCalendar.workingWeekdays.join(', ')} | Holidays/Exceptions: {assignedCalendar.exceptionDates.length}
+                </p>
+              )}
             </div>
             <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-lg space-y-1">
               <span className="text-slate-500 dark:text-slate-400 block font-medium">Constraint Logic</span>
@@ -354,3 +443,4 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
     </div>
   );
 };
+

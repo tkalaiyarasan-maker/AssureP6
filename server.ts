@@ -7,9 +7,32 @@ import authHandler from './api/auth.ts';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+function resolvePort(): number {
+  const args = process.argv.slice(2);
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--port' && args[i + 1]) {
+      const parsed = Number(args[i + 1]);
+      if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    }
+    if (args[i].startsWith('--port=')) {
+      const parsed = Number(args[i].slice('--port='.length));
+      if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    }
+  }
+  if (process.env.DEFAULT_APP_PORT) {
+    const parsed = Number(process.env.DEFAULT_APP_PORT);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  if (process.env.PORT && process.env.PORT !== process.env.NGINX_PORT) {
+    const parsed = Number(process.env.PORT);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  return 3000;
+}
+
 async function startServer() {
   const app = express();
-  const port = Number(process.env.PORT) || 3000;
+  const port = resolvePort();
   const isProd = process.env.NODE_ENV === 'production';
 
   // Security headers (preserve iframe compatibility for preview environment)

@@ -102,6 +102,8 @@ export interface Activity {
   // Raw fields
   calendarId?: string;
   calendarName?: string;
+  calendarType?: CalendarType;
+  calendarHoursPerDay?: number;
   constraintType?: string;
   constraintDate?: string;
 }
@@ -141,10 +143,32 @@ export interface Resource {
   parentId?: string;
 }
 
+export type CalendarType = 'CA_Base' | 'CA_Project' | 'CA_Rsrc';
+
+export interface CalendarNonWorkingPeriod {
+  startDate: string;
+  endDate: string;
+  calendarDays: number;
+  exceptionDatesCount: number;
+  category: 'Monsoon / Extended Closure' | 'Multi-Day Holiday / Shutdown' | 'Holiday';
+  label: string;
+}
+
 export interface Calendar {
   id: string;
   name: string;
+  type: CalendarType;
+  typeLabel: 'Global' | 'Project' | 'Resource';
+  projId?: string;
+  baseCalendarId?: string;
+  isDefault?: boolean;
   hoursPerDay: number;
+  workingWeekdays: string[];
+  nonWorkingWeekdays: string[];
+  exceptionDates: string[];
+  extraWorkingDates: string[];
+  nonWorkingPeriods: CalendarNonWorkingPeriod[];
+  assignedActivitiesCount?: number;
 }
 
 export interface ProjectMetadata {
@@ -153,11 +177,30 @@ export interface ProjectMetadata {
   name: string;
   planStartDate?: string;
   planFinishDate?: string;
+  scheduledFinishDate?: string;
+  mustFinishByDate?: string;
+  defaultCalendarId?: string;
   dataDate?: string; // Current progress cutoff date in P6
   status: string;
   createdDate?: string;
   lastUpdateDate?: string;
   currencySymbol: string;
+}
+
+export interface LongestPathChain {
+  rank: number;
+  name: string;
+  isPrimary: boolean;
+  totalFloatDays: number;
+  floatGapFromPrimaryDays: number;
+  startDate?: string;
+  finishDate?: string;
+  spanDays: number;
+  activityIds: string[];
+  mergesIntoPathRank?: number;
+  mergesIntoActivityCode?: string;
+  validationStatus: 'Validated Continuous' | 'Has Open Start' | 'Constraint-Interrupted';
+  validationNotes: string[];
 }
 
 export interface ParsedProject {
@@ -168,6 +211,7 @@ export interface ParsedProject {
   resources: Resource[];
   calendars: Calendar[];
   relationships: Relationship[];
+  longestPaths: LongestPathChain[];
   rawTables: Map<string, XerRawTable>;
   rawText: string;
   stats: ProjectStatistics;
@@ -190,6 +234,18 @@ export interface ProjectStatistics {
   totalRelationships: number;
 }
 
+export interface DcmaAffectedItem {
+  id: string;
+  code: string;
+  name: string;
+  reason: string;
+  wbsPath?: string;
+  calendarName?: string;
+  startDate?: string;
+  finishDate?: string;
+  totalFloatDays?: number;
+}
+
 export interface DcmaCheckItem {
   id: number;
   name: string;
@@ -201,7 +257,7 @@ export interface DcmaCheckItem {
   totalCount: number;
   actualPct: number;
   severity: 'pass' | 'warning' | 'fail';
-  affectedActivities: { id: string; code: string; name: string; reason: string }[];
+  affectedActivities: DcmaAffectedItem[];
 }
 
 export interface DcmaAuditResult {
@@ -210,3 +266,4 @@ export interface DcmaAuditResult {
   checks: DcmaCheckItem[];
   summaryNote: string;
 }
+

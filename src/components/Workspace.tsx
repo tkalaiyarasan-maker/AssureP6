@@ -6,6 +6,7 @@ import { evaluateP6ProgrammeHealth } from '../utils/healthCheckEvaluator';
 import { Navbar, ActiveTab } from './Navbar';
 import { ProjectSummaryHeader } from './ProjectSummaryHeader';
 import { P6HealthCheckDashboard } from './dashboard/P6HealthCheckDashboard';
+import { DashboardNavigationRequest } from './dashboard/ExecutiveScoreCards';
 import { GanttChart } from './GanttChart';
 import { TilosTimeChainageChart } from './TilosTimeChainageChart';
 import { ResourceAssignmentGantt } from './ResourceAssignmentGantt';
@@ -125,6 +126,30 @@ export const Workspace: React.FC<WorkspaceProps> = ({
   const [activeTab, setActiveTab] = useState<ActiveTab>('healthDashboard');
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
+  const [dcmaCheckId, setDcmaCheckId] = useState<number | null>(null);
+  const [dashboardNavReq, setDashboardNavReq] = useState<(DashboardNavigationRequest & { rev: number }) | null>(null);
+
+  const handleNavigateFromDashboard = (req: DashboardNavigationRequest) => {
+    if (req.dcmaCheckId) {
+      setDcmaCheckId(req.dcmaCheckId);
+    }
+    if (req.workspaceTab && req.workspaceTab !== 'healthDashboard') {
+      setActiveTab(req.workspaceTab);
+      return;
+    }
+    setActiveTab('healthDashboard');
+    setDashboardNavReq({ ...req, rev: Date.now() });
+  };
+
+  const handleTraceBackward = (act: Activity) => {
+    setSelectedActivity(null);
+    setActiveTab('healthDashboard');
+    setDashboardNavReq({
+      dashboardSubTab: 'paths',
+      backwardTargetId: act.id,
+      rev: Date.now(),
+    });
+  };
 
   // Dynamically compute the 54-parameter health check dashboard data for the active project
   const healthDashboardData = useMemo(() => {
@@ -146,6 +171,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
         // ignore storage quota issues
       }
       setSelectedActivity(null);
+      setDcmaCheckId(null);
+      setDashboardNavReq(null);
       setActiveTab('healthDashboard');
     } catch (err) {
       console.error('Error parsing XER file:', err);
@@ -166,6 +193,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
         // ignore
       }
       setSelectedActivity(null);
+      setDcmaCheckId(null);
+      setDashboardNavReq(null);
       setActiveTab('healthDashboard');
     } catch (err) {
       console.error('Error loading sample project:', err);
@@ -229,6 +258,10 @@ export const Workspace: React.FC<WorkspaceProps> = ({
           {activeTab === 'healthDashboard' && healthDashboardData && (
             <P6HealthCheckDashboard
               data={healthDashboardData}
+              project={project}
+              onSelectActivity={setSelectedActivity}
+              onNavigateWorkspace={handleNavigateFromDashboard}
+              externalNavRequest={dashboardNavReq}
             />
           )}
 
@@ -237,6 +270,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
               project={project}
               onSelectActivity={setSelectedActivity}
               selectedActivityId={selectedActivity?.id}
+              onTraceBackward={handleTraceBackward}
             />
           )}
 
@@ -261,6 +295,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
               project={project}
               onSelectActivity={setSelectedActivity}
               selectedActivityId={selectedActivity?.id}
+              onTraceBackward={handleTraceBackward}
             />
           )}
 
@@ -275,6 +310,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
             <DcmaHealthAudit
               project={project}
               onSelectActivity={setSelectedActivity}
+              initialExpandedCheckId={dcmaCheckId}
             />
           )}
 
@@ -300,6 +336,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
           project={project}
           onClose={() => setSelectedActivity(null)}
           onSelectActivity={setSelectedActivity}
+          onOpenBackwardTrace={handleTraceBackward}
         />
       )}
 

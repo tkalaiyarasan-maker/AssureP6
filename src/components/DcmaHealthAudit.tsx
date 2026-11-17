@@ -1,32 +1,201 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Activity, DcmaCheckItem, ParsedProject } from '../types/xer';
+import { downloadCsvFile } from '../utils/scheduleAnalysis';
 import {
-  ShieldCheck,
-  ShieldAlert,
   AlertTriangle,
   CheckCircle2,
   XCircle,
   ChevronDown,
   ChevronUp,
-  FileText,
   Award,
   Info,
+  Copy,
+  Check,
+  Download,
 } from 'lucide-react';
 
 interface DcmaHealthAuditProps {
   project: ParsedProject;
   onSelectActivity: (activity: Activity) => void;
+  initialExpandedCheckId?: number | null;
 }
 
 export const DcmaHealthAudit: React.FC<DcmaHealthAuditProps> = ({
   project,
   onSelectActivity,
+  initialExpandedCheckId = null,
 }) => {
   const { healthAudit } = project;
-  const [expandedCheckId, setExpandedCheckId] = useState<number | null>(null);
+  const [expandedCheckId, setExpandedCheckId] = useState<number | null>(initialExpandedCheckId);
+  const [copiedCheckId, setCopiedCheckId] = useState<number | 'all' | null>(null);
+
+  useEffect(() => {
+    if (initialExpandedCheckId) {
+      setExpandedCheckId(initialExpandedCheckId);
+    }
+  }, [initialExpandedCheckId]);
 
   const toggleExpand = (id: number) => {
     setExpandedCheckId((prev) => (prev === id ? null : id));
+  };
+
+  const handleCopyCheckList = async (check: DcmaCheckItem) => {
+    const header = `DCMA #${check.id}: ${check.name} | Actual: ${check.actualCount} (${check.actualPct}%) | Target: ${check.threshold}`;
+    const cols = ['Code', 'Activity / Link', 'WBS Hierarchy', 'Calendar', 'Start', 'Finish', 'Total Float (d)', 'Deficiency Reason'].join('\t');
+    const lines = check.affectedActivities.map((item) =>
+      [
+        item.code,
+        item.name,
+        item.wbsPath || '—',
+        item.calendarName || '—',
+        item.startDate || '—',
+        item.finishDate || '—',
+        item.totalFloatDays !== undefined ? item.totalFloatDays : '—',
+        item.reason,
+      ].join('\t')
+    );
+    const text = [header, cols, ...lines].join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedCheckId(check.id);
+      setTimeout(() => setCopiedCheckId(null), 2000);
+    } catch {
+      // Fallback if clipboard API blocked
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopiedCheckId(check.id);
+      setTimeout(() => setCopiedCheckId(null), 2000);
+    }
+  };
+
+  const handleDownloadCheckCsv = (check: DcmaCheckItem) => {
+    const slug = check.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    downloadCsvFile(
+      `${project.metadata.code}_DCMA_${String(check.id).padStart(2, '0')}_${slug}.csv`,
+      [
+        'DCMA Check #',
+        'DCMA Parameter',
+        'Standard Threshold',
+        'Actual %',
+        'Status',
+        'Activity / Link Code',
+        'Activity Name',
+        'WBS Hierarchy',
+        'Assigned Calendar',
+        'Start Date',
+        'Finish Date',
+        'Total Float (Days)',
+        'Deficiency Reason',
+      ],
+      check.affectedActivities.map((item) => [
+        check.id,
+        check.name,
+        check.threshold,
+        `${check.actualPct}%`,
+        check.severity.toUpperCase(),
+        item.code,
+        item.name,
+        item.wbsPath || '',
+        item.calendarName || '',
+        item.startDate || '',
+        item.finishDate || '',
+        item.totalFloatDays ?? '',
+        item.reason,
+      ])
+    );
+  };
+
+  const handleDownloadAllDcmaCsv = () => {
+    const rows: (string | number | undefined)[][] = [];
+    for (const check of healthAudit.checks) {
+      if (check.affectedActivities.length === 0) {
+        rows.push([
+          check.id,
+          check.name,
+          check.threshold,
+          check.actualCount,
+          `${check.actualPct}%`,
+          check.severity.toUpperCase(),
+          '—',
+          'No non-compliant items',
+          '',
+          '',
+          '',
+          '',
+          '',
+          'Compliant',
+        ]);
+      } else {
+        for (const item of check.affectedActivities) {
+          rows.push([
+            check.id,
+            check.name,
+            check.threshold,
+            check.actualCount,
+            `${check.actualPct}%`,
+            check.severity.toUpperCase(),
+            item.code,
+            item.name,
+            item.wbsPath || '',
+            item.calendarName || '',
+            item.startDate || '',
+            item.finishDate || '',
+            item.totalFloatDays ?? '',
+            item.reason,
+          ]);
+        }
+      }
+    }
+    downloadCsvFile(
+      `${project.metadata.code}_DCMA_14Point_Full_NonCompliant_Report.csv`,
+      [
+        'Check #',
+        'DCMA Parameter',
+        'Threshold',
+        'Count',
+        'Actual %',
+        'Status',
+        'Activity / Link Code',
+        'Activity Name',
+        'WBS Hierarchy',
+        'Assigned Calendar',
+        'Start Date',
+        'Finish Date',
+        'Total Float (Days)',
+        'Deficiency Reason',
+      ],
+      rows
+    );
+  };
+
+  const handleCopyAllSummary = async () => {
+    const lines = [
+      `Assure P6 — DCMA 14-Point Audit Report (${project.metadata.code}: ${project.metadata.name})`,
+      `Overall Compliance: ${healthAudit.overallScorePct}% (Grade ${healthAudit.grade}) | Data Date: ${project.metadata.dataDate || 'N/A'}`,
+      '',
+      ['#', 'Parameter', 'Standard', 'Actual', 'Status', 'Non-Compliant Items'].join('\t'),
+      ...healthAudit.checks.map((c) =>
+        [
+          c.id,
+          c.name,
+          c.threshold,
+          `${c.actualCount} (${c.actualPct}%)`,
+          c.severity.toUpperCase(),
+          c.affectedActivities.length,
+        ].join('\t')
+      ),
+    ];
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      setCopiedCheckId('all');
+      setTimeout(() => setCopiedCheckId(null), 2000);
+    } catch {
+      // ignore
+    }
   };
 
   const gradeBadgeColor =
@@ -50,29 +219,51 @@ export const DcmaHealthAudit: React.FC<DcmaHealthAuditProps> = ({
             </h2>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Industry standard Defense Contract Management Agency (DCMA) metric assessment for Primavera P6 schedules.
+            Industry standard Defense Contract Management Agency (DCMA) metric assessment with per-check and full non-compliant export.
           </p>
         </div>
 
-        {/* Big Grade & Score Card */}
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <span className="text-xs text-slate-500 dark:text-slate-400 block">Overall Compliance</span>
-            <span className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
-              {healthAudit.overallScorePct}%
-            </span>
-          </div>
-
-          <div
-            className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl border font-bold text-2xl font-mono shadow-inner ${gradeBadgeColor}`}
+        {/* Actions + Big Grade & Score Card */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleCopyAllSummary}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <span>{healthAudit.grade}</span>
+            {copiedCheckId === 'all' ? (
+              <Check className="w-3.5 h-3.5 text-emerald-500" />
+            ) : (
+              <Copy className="w-3.5 h-3.5 text-slate-500" />
+            )}
+            {copiedCheckId === 'all' ? 'Copied Summary!' : 'Copy Summary'}
+          </button>
+
+          <button
+            onClick={handleDownloadAllDcmaCsv}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold shadow-xs transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Download Full Non-Compliant CSV
+          </button>
+
+          <div className="flex items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-800">
+            <div className="text-right">
+              <span className="text-xs text-slate-500 dark:text-slate-400 block">Overall Compliance</span>
+              <span className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
+                {healthAudit.overallScorePct}%
+              </span>
+            </div>
+
+            <div
+              className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl border font-bold text-2xl font-mono shadow-inner ${gradeBadgeColor}`}
+            >
+              <span>{healthAudit.grade}</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Summary Note Banner */}
-      <div className="px-5 py-3 bg-slate-100/70 dark:bg-slate-950/90 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-xs">
+      <div className="px-5 py-3 bg-slate-100/70 dark:bg-slate-950/90 border-b border-slate-200 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
           <Info className="w-4 h-4 text-blue-600 dark:text-sky-400 shrink-0" />
           <span>{healthAudit.summaryNote}</span>
@@ -133,8 +324,8 @@ export const DcmaHealthAudit: React.FC<DcmaHealthAuditProps> = ({
                   </div>
                 </div>
 
-                {/* Score & Threshold Strip */}
-                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/60 flex items-center justify-between text-xs">
+                {/* Score & Threshold Strip + Export Controls */}
+                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-3 font-mono">
                     <span className="text-slate-500 dark:text-slate-400">
                       Standard: <span className="text-slate-800 dark:text-slate-300 font-semibold">{check.threshold}</span>
@@ -153,24 +344,55 @@ export const DcmaHealthAudit: React.FC<DcmaHealthAuditProps> = ({
                   </div>
 
                   {hasAffected && (
-                    <button
-                      onClick={() => toggleExpand(check.id)}
-                      className="flex items-center gap-1 text-[11px] font-medium text-blue-600 dark:text-sky-400 hover:underline transition-colors"
-                    >
-                      <span>
-                        {isExpanded ? 'Hide' : 'View'} {check.affectedActivities.length} Tasks
-                      </span>
-                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleCopyCheckList(check)}
+                        title="Copy non-compliant activities to clipboard"
+                        className="flex items-center gap-1 px-2 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        {copiedCheckId === check.id ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-500" />
+                            <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => handleDownloadCheckCsv(check)}
+                        title="Download non-compliant activities CSV report"
+                        className="flex items-center gap-1 px-2 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <Download className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                        <span>CSV</span>
+                      </button>
+
+                      <button
+                        onClick={() => toggleExpand(check.id)}
+                        className="flex items-center gap-1 text-[11px] font-medium text-blue-600 dark:text-sky-400 hover:underline transition-colors"
+                      >
+                        <span>
+                          {isExpanded ? 'Hide' : 'View'} {check.affectedActivities.length}
+                        </span>
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
                   )}
                 </div>
 
                 {/* Expanded Activity List Accordion */}
                 {isExpanded && hasAffected && (
-                  <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/80 space-y-1.5 max-h-48 overflow-y-auto">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
-                      Non-Compliant Activities:
-                    </span>
+                  <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/80 space-y-1.5 max-h-56 overflow-y-auto">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Non-Compliant Activities ({check.affectedActivities.length}):
+                      </span>
+                    </div>
                     {check.affectedActivities.map((item, idx) => {
                       const fullAct = project.activities.find((a) => a.id === item.id || a.code === item.code);
                       return (
@@ -179,12 +401,15 @@ export const DcmaHealthAudit: React.FC<DcmaHealthAuditProps> = ({
                           onClick={() => fullAct && onSelectActivity(fullAct)}
                           className="p-2 rounded bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer transition-colors shadow-xs"
                         >
-                          <div className="space-y-0.5 truncate max-w-[75%]">
+                          <div className="space-y-0.5 truncate max-w-[78%]">
                             <div className="flex items-center gap-2">
                               <span className="font-mono text-amber-700 dark:text-amber-400 font-semibold">{item.code}</span>
                               <span className="text-slate-800 dark:text-slate-300 truncate font-medium">{item.name}</span>
                             </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{item.reason}</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                              {item.reason}
+                              {item.calendarName ? ` · Cal: ${item.calendarName}` : ''}
+                            </p>
                           </div>
                           <span className="text-[11px] text-blue-600 dark:text-sky-400 font-medium shrink-0 hover:underline">
                             Inspect &rarr;
@@ -202,3 +427,4 @@ export const DcmaHealthAudit: React.FC<DcmaHealthAuditProps> = ({
     </div>
   );
 };
+
