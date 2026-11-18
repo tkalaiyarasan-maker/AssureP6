@@ -48,13 +48,20 @@ export function parseRawXer(content: string, fileName = 'project.xer'): XerRawDa
       break;
     }
 
-    // Header record: ERMHDR\t8.3\t2023-11-01\tPROJ\tPROJECT
+    // Header record: ERMHDR\t20.12\t2024-03-15\tProject\tadmin\tadmin User\tdbxDatabaseName\tProject Management\tUSD
+    // or simplified ERMHDR\t8.3\t2023-11-01\tPROJ\tPROJECT
     if (line.startsWith('ERMHDR')) {
       const parts = line.split('\t');
       if (parts.length > 1) header.version = parts[1];
       if (parts.length > 2) header.exportDate = parts[2];
       if (parts.length > 3) header.dbType = parts[3];
       if (parts.length > 4) header.projectName = parts[4];
+      const tailCurrency = [parts[8], parts[7]]
+        .map((v) => (v || '').trim().toUpperCase())
+        .find((v) => /^[A-Z]{3}$/.test(v));
+      if (tailCurrency) {
+        header.currencyCode = tailCurrency;
+      }
       continue;
     }
 
@@ -145,6 +152,143 @@ export function normalizeDate(dateStr?: string): string | undefined {
   return clean.split(' ')[0];
 }
 
+const CURRENCY_SYMBOL_MAP: Record<string, { symbol: string; name: string; decimals: number }> = {
+  USD: { symbol: '$', name: 'US Dollar', decimals: 2 },
+  INR: { symbol: '₹', name: 'Indian Rupee', decimals: 2 },
+  EUR: { symbol: '€', name: 'Euro', decimals: 2 },
+  GBP: { symbol: '£', name: 'British Pound', decimals: 2 },
+  AED: { symbol: 'AED', name: 'UAE Dirham', decimals: 2 },
+  SAR: { symbol: 'SAR', name: 'Saudi Riyal', decimals: 2 },
+  QAR: { symbol: 'QAR', name: 'Qatari Riyal', decimals: 2 },
+  OMR: { symbol: 'OMR', name: 'Omani Rial', decimals: 3 },
+  KWD: { symbol: 'KWD', name: 'Kuwaiti Dinar', decimals: 3 },
+  BHD: { symbol: 'BHD', name: 'Bahraini Dinar', decimals: 3 },
+  JPY: { symbol: '¥', name: 'Japanese Yen', decimals: 0 },
+  CNY: { symbol: '¥', name: 'Chinese Yuan', decimals: 2 },
+  SGD: { symbol: 'S$', name: 'Singapore Dollar', decimals: 2 },
+  AUD: { symbol: 'A$', name: 'Australian Dollar', decimals: 2 },
+  CAD: { symbol: 'C$', name: 'Canadian Dollar', decimals: 2 },
+  CHF: { symbol: 'CHF', name: 'Swiss Franc', decimals: 2 },
+  MYR: { symbol: 'RM', name: 'Malaysian Ringgit', decimals: 2 },
+  THB: { symbol: '฿', name: 'Thai Baht', decimals: 2 },
+  IDR: { symbol: 'Rp', name: 'Indonesian Rupiah', decimals: 0 },
+  KRW: { symbol: '₩', name: 'South Korean Won', decimals: 0 },
+  ZAR: { symbol: 'R', name: 'South African Rand', decimals: 2 },
+  BRL: { symbol: 'R$', name: 'Brazilian Real', decimals: 2 },
+  MXN: { symbol: 'MX$', name: 'Mexican Peso', decimals: 2 },
+  PHP: { symbol: '₱', name: 'Philippine Peso', decimals: 2 },
+  VND: { symbol: '₫', name: 'Vietnamese Dong', decimals: 0 },
+  EGP: { symbol: 'EGP', name: 'Egyptian Pound', decimals: 2 },
+  PKR: { symbol: 'PKR', name: 'Pakistani Rupee', decimals: 2 },
+  BDT: { symbol: '৳', name: 'Bangladeshi Taka', decimals: 2 },
+  LKR: { symbol: 'LKR', name: 'Sri Lankan Rupee', decimals: 2 },
+  TRY: { symbol: '₺', name: 'Turkish Lira', decimals: 2 },
+  PLN: { symbol: 'zł', name: 'Polish Zloty', decimals: 2 },
+  SEK: { symbol: 'SEK', name: 'Swedish Krona', decimals: 2 },
+  NOK: { symbol: 'NOK', name: 'Norwegian Krone', decimals: 2 },
+  DKK: { symbol: 'DKK', name: 'Danish Krone', decimals: 2 },
+};
+
+function resolveXerCurrency(
+  tables: Map<string, XerRawTable>,
+  projRecord: Record<string, string>,
+  headerCurrencyCode?: string
+): {
+  currencyId?: string;
+  currencyCode: string;
+  currencyName: string;
+  currencySymbol: string;
+  decimalDigits: number;
+} {
+  const currTable = tables.get('CURRTYPE');
+  const preferTable = tables.get('PREFER');
+  const rsrcTable = tables.get('RSRC');
+  const currRecords = currTable?.records || [];
+
+  const fromRecord = (rec: Record<string, string>) => {
+    const code = (rec['curr_short_name'] || headerCurrencyCode || 'USD').trim().toUpperCase();
+    const known = CURRENCY_SYMBOL_MAP[code];
+    const rawSymbol = (rec['curr_symbol'] || '').trim();
+    const symbol = rawSymbol || known?.symbol || code || '$';
+    const name = (rec['curr_type'] || rec['curr_name'] || known?.name || code).trim();
+    const parsedDecimals = parseInt(rec['decimal_digit_cnt'] || '', 10);
+    const decimalDigits = Number.isFinite(parsedDecimals)
+      ? parsedDecimals
+      : known?.decimals ?? 2;
+
+    return {
+      currencyId: (rec['curr_id'] || '').trim() || undefined,
+      currencyCode: code,
+      currencyName: name,
+      currencySymbol: symbol,
+      decimalDigits,
+    };
+  };
+
+  if (currRecords.length > 0) {
+    // 1. PROJECT.curr_id or PROJECT.base_curr_id
+    const projCurrId = (projRecord['curr_id'] || projRecord['base_curr_id'] || '').trim();
+    if (projCurrId) {
+      const match = currRecords.find((r) => (r['curr_id'] || '').trim() === projCurrId);
+      if (match) return fromRecord(match);
+    }
+
+    // 2. PREFER.curr_id (P6 User/Global Preferences)
+    const preferRec = preferTable?.records?.[0];
+    const preferCurrId = (preferRec?.['curr_id'] || '').trim();
+    if (preferCurrId) {
+      const match = currRecords.find((r) => (r['curr_id'] || '').trim() === preferCurrId);
+      if (match) return fromRecord(match);
+    }
+
+    // 3. ERMHDR currency code matched against CURRTYPE.curr_short_name
+    if (headerCurrencyCode) {
+      const hdrCode = headerCurrencyCode.trim().toUpperCase();
+      const match = currRecords.find(
+        (r) => (r['curr_short_name'] || '').trim().toUpperCase() === hdrCode
+      );
+      if (match) return fromRecord(match);
+    }
+
+    // 4. RSRC.curr_id (if resources reference a currency in CURRTYPE)
+    if (rsrcTable && rsrcTable.records.length > 0) {
+      const rsrcCurrId = rsrcTable.records
+        .map((r) => (r['curr_id'] || '').trim())
+        .find((id) => Boolean(id));
+      if (rsrcCurrId) {
+        const match = currRecords.find((r) => (r['curr_id'] || '').trim() === rsrcCurrId);
+        if (match) return fromRecord(match);
+      }
+    }
+
+    // 5. Fallback to defined CURRTYPE record (if multiple, prefer non-USD project currency if exported, else first)
+    if (currRecords.length === 1) {
+      return fromRecord(currRecords[0]);
+    }
+    return fromRecord(currRecords[0]);
+  }
+
+  // 6. ERMHDR currency code without CURRTYPE table
+  if (headerCurrencyCode) {
+    const code = headerCurrencyCode.trim().toUpperCase();
+    const known = CURRENCY_SYMBOL_MAP[code];
+    return {
+      currencyCode: code,
+      currencyName: known?.name || code,
+      currencySymbol: known?.symbol || code,
+      decimalDigits: known?.decimals ?? 2,
+    };
+  }
+
+  // 7. Default fallback when XER omits all currency metadata
+  return {
+    currencyCode: 'USD',
+    currencyName: 'US Dollar',
+    currencySymbol: '$',
+    decimalDigits: 2,
+  };
+}
+
 /**
  * Full parser transforming raw XER tables into a complete relational project model
  */
@@ -168,6 +312,9 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
   const defaultCalendarId = projRecord['clndr_id'] || undefined;
   const dataDate = normalizeDate(projRecord['last_recalc_date']) || planStartDate || new Date().toISOString().split('T')[0];
 
+  // Resolve Project Currency from P6 XER tables (CURRTYPE, PROJECT, PREFER, ERMHDR)
+  const currencyInfo = resolveXerCurrency(tables, projRecord, header.currencyCode);
+
   const metadata: ProjectMetadata = {
     id: projId,
     code: projCode,
@@ -181,7 +328,11 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
     status: projRecord['status_code'] || 'Active',
     createdDate: normalizeDate(projRecord['add_date']),
     lastUpdateDate: normalizeDate(projRecord['last_recalc_date']),
-    currencySymbol: '$',
+    currencyId: currencyInfo.currencyId,
+    currencyCode: currencyInfo.currencyCode,
+    currencyName: currencyInfo.currencyName,
+    currencySymbol: currencyInfo.currencySymbol,
+    currencyDecimalDigits: currencyInfo.decimalDigits,
   };
 
   // 2. CALENDAR table
@@ -1059,14 +1210,29 @@ export function performDcmaAudit(
 export function exportProjectToXer(project: ParsedProject): string {
   const lines: string[] = [];
 
-  // Header line
-  lines.push(`ERMHDR\t8.3\t${new Date().toISOString().split('T')[0]}\tPROJ\t${project.metadata.code}`);
+  const exportCurrencyCode = (project.metadata.currencyCode || 'USD').toUpperCase();
+  const exportCurrencyId = project.metadata.currencyId || '1';
+  const exportCurrencySymbol = project.metadata.currencySymbol || '$';
+  const exportCurrencyName = project.metadata.currencyName || exportCurrencyCode;
+  const exportCurrencyDecimals = project.metadata.currencyDecimalDigits ?? 2;
+
+  // Header line (9-column standard P6 ERMHDR with currency code at col 8)
+  lines.push(
+    `ERMHDR\t8.3\t${new Date().toISOString().split('T')[0]}\tProject\t${project.metadata.code}\tAssure P6\tPROJ\tProject Management\t${exportCurrencyCode}`
+  );
+
+  // CURRTYPE table
+  lines.push('%T\tCURRTYPE');
+  lines.push('%F\tcurr_id\tdecimal_digit_cnt\tcurr_symbol\tdecimal_symbol\tdigit_group_symbol\tcurr_type\tcurr_short_name');
+  lines.push(
+    `%R\t${exportCurrencyId}\t${exportCurrencyDecimals}\t${exportCurrencySymbol}\t.\t,\t${exportCurrencyName}\t${exportCurrencyCode}`
+  );
 
   // PROJECT table
   lines.push('%T\tPROJECT');
-  lines.push('%F\tproj_id\tproj_short_name\ttask_code_base\tplan_start_date\tplan_end_date\tlast_recalc_date\tstatus_code');
+  lines.push('%F\tproj_id\tproj_short_name\ttask_code_base\tplan_start_date\tplan_end_date\tscd_end_date\tlast_recalc_date\tstatus_code\tcurr_id');
   lines.push(
-    `%R\t${project.metadata.id}\t${project.metadata.code}\t${project.metadata.name}\t${project.metadata.planStartDate || ''}\t${project.metadata.planFinishDate || ''}\t${project.metadata.dataDate || ''}\tActive`
+    `%R\t${project.metadata.id}\t${project.metadata.code}\t${project.metadata.name}\t${project.metadata.planStartDate || ''}\t${project.metadata.mustFinishByDate || project.metadata.planFinishDate || ''}\t${project.metadata.scheduledFinishDate || project.metadata.planFinishDate || ''}\t${project.metadata.dataDate || ''}\tActive\t${exportCurrencyId}`
   );
 
   // PROJWBS table

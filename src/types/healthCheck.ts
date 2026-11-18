@@ -132,6 +132,8 @@ export interface P6HealthCheckDashboardData {
     completionSourceNote?: string;
     reviewer: string;
     reviewDate: string;
+    currencyCode?: string;
+    currencySymbol?: string;
   };
   
   counts: {

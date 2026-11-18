@@ -943,3 +943,26 @@ export function downloadCsvFile(filename: string, headers: string[], rows: (stri
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Formats a monetary value using the project's Primavera P6 currency symbol/code.
+ * Handles punctuation symbols directly (e.g. ₹125,000, $125,000) and adds a space
+ * after alphabetic codes/abbreviations (e.g. AED 125,000, Rs. 125,000).
+ */
+export function formatCurrencyAmount(
+  amount: number,
+  currencySymbol?: string,
+  currencyCode?: string,
+  decimals = 2
+): string {
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  const rawSymbol = (currencySymbol || '').trim();
+  const rawCode = (currencyCode || '').trim().toUpperCase();
+  const prefix = rawSymbol || rawCode || '$';
+  const sign = safeAmount < 0 ? '-' : '';
+  const absFormatted = Math.abs(safeAmount).toLocaleString(undefined, {
+    maximumFractionDigits: Math.max(0, Math.min(4, decimals)),
+  });
+  const needsSpace = /[A-Za-z.]$/.test(prefix);
+  return `${sign}${prefix}${needsSpace ? ' ' : ''}${absFormatted}`;
+}

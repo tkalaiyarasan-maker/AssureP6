@@ -14,6 +14,7 @@ export interface XerFileHeader {
   user: string;
   dbType: string;
   projectName?: string;
+  currencyCode?: string;
 }
 
 export interface XerRawData {
@@ -184,7 +185,11 @@ export interface ProjectMetadata {
   status: string;
   createdDate?: string;
   lastUpdateDate?: string;
+  currencyId?: string;
+  currencyCode?: string;
+  currencyName?: string;
   currencySymbol: string;
+  currencyDecimalDigits?: number;
 }
 
 export interface LongestPathChain {

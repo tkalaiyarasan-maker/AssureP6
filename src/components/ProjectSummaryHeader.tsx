@@ -8,6 +8,7 @@ import {
   Activity as ActivityIcon,
   HardHat,
   Award,
+  Coins,
 } from 'lucide-react';
 import { ActiveTab } from './Navbar';
 
@@ -93,6 +94,22 @@ export const ProjectSummaryHeader: React.FC<ProjectSummaryHeaderProps> = ({
           <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
           <span>Duration:</span>
           <span className="text-slate-800 dark:text-slate-200 font-semibold tabular-nums">{stats.totalDurationDays}d</span>
+        </div>
+
+        {/* Project Currency (from P6 XER) */}
+        <div
+          onClick={() => onNavigateToTab('resources')}
+          className="hidden md:flex items-center gap-1.5 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
+          title={`Project Currency from P6 XER: ${metadata.currencyName || metadata.currencyCode || 'USD'}`}
+        >
+          <Coins className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          <span>Currency:</span>
+          <span className="px-1.5 py-0.5 rounded bg-emerald-100/80 dark:bg-emerald-950/60 border border-emerald-300/80 dark:border-emerald-800/70 text-emerald-800 dark:text-emerald-300 font-bold">
+            {metadata.currencyCode || 'USD'}
+            {metadata.currencySymbol && metadata.currencySymbol !== metadata.currencyCode
+              ? ` (${metadata.currencySymbol})`
+              : ''}
+          </span>
         </div>
 
         {/* DCMA Schedule Quality Grade */}

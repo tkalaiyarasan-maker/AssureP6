@@ -16,7 +16,7 @@ export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data
   return (
     <div className="space-y-3">
       {/* 1. Project Details Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 p-3 bg-amber-50/80 dark:bg-slate-900/80 border border-amber-200/90 dark:border-slate-800 rounded-xl text-xs shadow-sm">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 p-3 bg-amber-50/80 dark:bg-slate-900/80 border border-amber-200/90 dark:border-slate-800 rounded-xl text-xs shadow-sm">
         {/* Project Name */}
         <div className="space-y-1">
           <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400 block tracking-wider">
@@ -93,6 +93,19 @@ export const ProjectMetaAndCounts: React.FC<ProjectMetaAndCountsProps> = ({ data
           </span>
           <div className="py-1 font-mono text-slate-800 dark:text-slate-200 text-xs font-semibold">
             {projectDetails.reviewDate}
+          </div>
+        </div>
+
+        {/* P6 Currency */}
+        <div className="space-y-1">
+          <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400 block tracking-wider">
+            Currency (P6)
+          </span>
+          <div className="py-1 font-mono text-emerald-800 dark:text-emerald-300 text-xs font-bold">
+            {projectDetails.currencyCode || 'USD'}
+            {projectDetails.currencySymbol && projectDetails.currencySymbol !== projectDetails.currencyCode
+              ? ` (${projectDetails.currencySymbol})`
+              : ''}
           </div>
         </div>
       </div>

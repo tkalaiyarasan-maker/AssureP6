@@ -3,7 +3,7 @@ import {
   Activity,
   ParsedProject,
 } from '../types/xer';
-import { traceBackwardPath } from '../utils/scheduleAnalysis';
+import { traceBackwardPath, formatCurrencyAmount } from '../utils/scheduleAnalysis';
 import {
   X,
   Calendar as CalendarIcon,
@@ -367,7 +367,9 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
                       <th className="py-2.5 px-4">Resource Name</th>
                       <th className="py-2.5 px-4">Type</th>
                       <th className="py-2.5 px-4 text-right">Target Units</th>
-                      <th className="py-2.5 px-4 text-right">Target Cost</th>
+                      <th className="py-2.5 px-4 text-right">
+                        Target Cost ({project.metadata.currencyCode || project.metadata.currencySymbol || 'USD'})
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
@@ -386,7 +388,12 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
                           {a.targetUnits.toLocaleString()}
                         </td>
                         <td className="py-2 px-4 text-right text-emerald-600 dark:text-emerald-400 font-semibold tabular-nums">
-                          ${a.targetCost.toLocaleString()}
+                          {formatCurrencyAmount(
+                            a.targetCost,
+                            project.metadata.currencySymbol,
+                            project.metadata.currencyCode,
+                            project.metadata.currencyDecimalDigits
+                          )}
                         </td>
                       </tr>
                     ))}

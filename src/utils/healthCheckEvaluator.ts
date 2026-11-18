@@ -730,6 +730,8 @@ export function evaluateP6ProgrammeHealth(project: ParsedProject): P6HealthCheck
         : 'Computed from latest activity finish date',
       reviewer: 'Planning Engineer (P6)',
       reviewDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      currencyCode: project.metadata.currencyCode || 'USD',
+      currencySymbol: project.metadata.currencySymbol || '$',
     },
     counts: {
       totalActivities: totalActs,

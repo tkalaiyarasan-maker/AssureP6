@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { Activity, ParsedProject, Resource, ResourceType } from '../types/xer';
+import { formatCurrencyAmount } from '../utils/scheduleAnalysis';
 import {
   Users,
   Search,
-  DollarSign,
+  Coins,
   Briefcase,
   Layers,
   ArrowRight,
@@ -420,7 +421,12 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
           <div className="flex items-center gap-2 shrink-0 text-[11px] font-mono text-slate-500 dark:text-slate-400">
             {node.totalCost > 0 && (
               <span className="text-emerald-700 dark:text-emerald-400 font-semibold tabular-nums hidden sm:inline">
-                ${node.totalCost.toLocaleString()}
+                {formatCurrencyAmount(
+                  node.totalCost,
+                  project.metadata.currencySymbol,
+                  project.metadata.currencyCode,
+                  project.metadata.currencyDecimalDigits
+                )}
               </span>
             )}
             <span className="px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
@@ -484,9 +490,17 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-slate-500 dark:text-slate-400">Total Budget:</span>
+              <Coins className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-slate-500 dark:text-slate-400">
+                Total Budget ({project.metadata.currencyCode || project.metadata.currencySymbol || 'USD'}):
+              </span>
               <span className="text-emerald-700 dark:text-emerald-400 font-bold tabular-nums">
-                ${totalBudgetCost.toLocaleString()}
+                {formatCurrencyAmount(
+                  totalBudgetCost,
+                  project.metadata.currencySymbol,
+                  project.metadata.currencyCode,
+                  project.metadata.currencyDecimalDigits
+                )}
               </span>
             </div>
           </div>
@@ -580,7 +594,12 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
                           {res.totalAssignedUnits.toLocaleString()} {res.unit}
                         </span>
                         <span className="text-emerald-700 dark:text-emerald-400 font-semibold tabular-nums">
-                          ${res.totalCost.toLocaleString()}
+                          {formatCurrencyAmount(
+                            res.totalCost,
+                            project.metadata.currencySymbol,
+                            project.metadata.currencyCode,
+                            project.metadata.currencyDecimalDigits
+                          )}
                         </span>
                       </div>
                     </div>
@@ -624,10 +643,15 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
 
                   <div className="text-right">
                     <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium">
-                      Total Rollup Budget Cost
+                      Total Rollup Budget Cost ({project.metadata.currencyCode || 'USD'})
                     </span>
                     <span className="text-2xl font-mono font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
-                      ${activeNode.totalCost.toLocaleString()}
+                      {formatCurrencyAmount(
+                        activeNode.totalCost,
+                        project.metadata.currencySymbol,
+                        project.metadata.currencyCode,
+                        project.metadata.currencyDecimalDigits
+                      )}
                     </span>
                   </div>
                 </div>
@@ -701,7 +725,9 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
                           <th className="py-2.5 px-3">Status</th>
                           <th className="py-2.5 px-3">WBS Node</th>
                           <th className="py-2.5 px-3 text-right">Target Units</th>
-                          <th className="py-2.5 px-3 text-right">Target Cost</th>
+                          <th className="py-2.5 px-3 text-right">
+                            Target Cost ({project.metadata.currencyCode || project.metadata.currencySymbol || 'USD'})
+                          </th>
                           <th className="py-2.5 px-3">Start Date</th>
                           <th className="py-2.5 px-3">Finish Date</th>
                           <th className="py-2.5 px-3 text-right">Action</th>
@@ -742,7 +768,12 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
                               {assignmentTargetUnits.toLocaleString()} {activeNode.unit || 'units'}
                             </td>
                             <td className="py-2.5 px-3 text-right text-emerald-700 dark:text-emerald-400 tabular-nums font-bold">
-                              ${assignmentCost.toLocaleString()}
+                              {formatCurrencyAmount(
+                                assignmentCost,
+                                project.metadata.currencySymbol,
+                                project.metadata.currencyCode,
+                                project.metadata.currencyDecimalDigits
+                              )}
                             </td>
                             <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 tabular-nums whitespace-nowrap">
                               {act.startDate || '—'}
