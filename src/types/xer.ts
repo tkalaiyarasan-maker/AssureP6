@@ -42,6 +42,12 @@ export interface Relationship {
   driving: boolean;
 }
 
+export interface ResourceCurve {
+  id: string;
+  name: string;
+  pctValues: number[]; // 21 P6 interval weights summing to ~100
+}
+
 export interface ResourceAssignment {
   id: string;
   taskId: string;
@@ -51,8 +57,18 @@ export interface ResourceAssignment {
   resourceType: ResourceType;
   targetUnits: number;
   actUnits: number;
+  remainUnits: number;
   targetCost: number;
   actCost: number;
+  remainCost: number;
+  targetStartDate?: string;
+  targetEndDate?: string;
+  actualStartDate?: string;
+  actualEndDate?: string;
+  remainStartDate?: string;
+  remainEndDate?: string;
+  curveId?: string;
+  curveName?: string;
 }
 
 export interface Activity {
@@ -142,6 +158,8 @@ export interface Resource {
   totalCost: number;
   assignedActivitiesCount: number;
   parentId?: string;
+  maxUnitsPerHour?: number;
+  defaultUnitsPerHour?: number;
 }
 
 export type CalendarType = 'CA_Base' | 'CA_Project' | 'CA_Rsrc';
@@ -214,6 +232,7 @@ export interface ParsedProject {
   wbsHierarchy: WbsNode[];
   wbsMap: Map<string, WbsNode>;
   resources: Resource[];
+  resourceCurves: Map<string, ResourceCurve>;
   calendars: Calendar[];
   relationships: Relationship[];
   longestPaths: LongestPathChain[];

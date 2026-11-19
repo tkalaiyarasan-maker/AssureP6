@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Activity, ParsedProject, Resource, ResourceType } from '../types/xer';
 import { formatCurrencyAmount } from '../utils/scheduleAnalysis';
+import { ResourceHistogramSCurve } from './ResourceHistogramSCurve';
 import {
   Users,
   Search,
@@ -21,7 +22,11 @@ import {
   Clock,
   Circle,
   FileSpreadsheet,
+  BarChart3,
+  Table2,
 } from 'lucide-react';
+
+const ALL_PROJECT_NODE_ID = '__ALL_PROJECT__';
 
 interface ResourceInspectorProps {
   project: ParsedProject;
@@ -49,8 +54,9 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
   onSelectActivity,
 }) => {
   const [viewMode, setViewMode] = useState<'tree' | 'flat'>('tree');
+  const [rightPanelMode, setRightPanelMode] = useState<'histogram' | 'overview'>('histogram');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string>(ALL_PROJECT_NODE_ID);
 
   // Group discipline categories based on resource code or name
   const getDiscipline = (code: string, name: string, type: ResourceType): string => {
@@ -132,10 +138,17 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
         }
       }
 
-      const calculateRollups = (node: ResourceTreeNode, lvl: number): void => {
+      const calculateRollups = (
+        node: ResourceTreeNode,
+        lvl: number,
+        visited = new Set<string>()
+      ): void => {
+        if (visited.has(node.id)) return;
+        visited.add(node.id);
         node.level = lvl;
         for (const child of node.children) {
-          calculateRollups(child, lvl + 1);
+          if (visited.has(child.id)) continue;
+          calculateRollups(child, lvl + 1, visited);
           node.totalCost += child.totalCost;
           node.totalAssignedUnits += child.totalAssignedUnits;
           node.assignedActivitiesCount += child.assignedActivitiesCount;
@@ -274,9 +287,41 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
     return map;
   }, [resourceTree]);
 
-  // Set default selection if none chosen
-  const activeNodeId = selectedNodeId || (resourceTree.length > 0 ? resourceTree[0].id : null);
-  const activeNode = activeNodeId ? allNodesMap.get(activeNodeId) : null;
+  // Overall totals
+  const totalBudgetCost = project.resources.reduce((sum, r) => sum + r.totalCost, 0);
+  const totalLaborHours = project.resources
+    .filter((r) => r.type === 'RT_Labor')
+    .reduce((sum, r) => sum + r.totalAssignedUnits, 0);
+  const totalAllUnits = project.resources.reduce((sum, r) => sum + r.totalAssignedUnits, 0);
+
+  // Virtual Whole-Project root node
+  const wholeProjectNode = useMemo<ResourceTreeNode>(
+    () => ({
+      id: ALL_PROJECT_NODE_ID,
+      code: project.metadata.code || 'PROJECT',
+      name: `${project.metadata.name} — All Resources`,
+      type: 'GROUP',
+      unit: 'units',
+      isGroup: true,
+      children: resourceTree,
+      level: 0,
+      totalCost: totalBudgetCost,
+      totalAssignedUnits: totalAllUnits,
+      assignedActivitiesCount: project.activities.filter((a) => a.assignments.length > 0).length,
+      distinctResourcesCount: project.resources.length,
+    }),
+    [project.metadata.code, project.metadata.name, resourceTree, totalBudgetCost, totalAllUnits, project.activities, project.resources.length]
+  );
+
+  // Active selection: Whole Project, RBS Group, or individual Resource
+  const activeNodeId =
+    selectedNodeId === ALL_PROJECT_NODE_ID || allNodesMap.has(selectedNodeId)
+      ? selectedNodeId
+      : ALL_PROJECT_NODE_ID;
+  const isWholeProjectSelected = activeNodeId === ALL_PROJECT_NODE_ID;
+  const activeNode = isWholeProjectSelected
+    ? wholeProjectNode
+    : allNodesMap.get(activeNodeId) || wholeProjectNode;
 
   // Toggle node expansion
   const toggleNodeExpand = (id: string, e: React.MouseEvent) => {
@@ -299,28 +344,49 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
     setExpandedNodeIds(new Set());
   };
 
-  // Helper to gather all leaf resource IDs under a selected tree node
-  const getSubtreeResourceIds = (node: ResourceTreeNode): string[] => {
+  // Helper to gather all resource IDs under a selected tree node (including parent resources with direct assignments)
+  const getSubtreeResourceIds = (
+    node: ResourceTreeNode,
+    visited = new Set<string>()
+  ): string[] => {
+    if (visited.has(node.id)) return [];
+    visited.add(node.id);
     const ids: string[] = [];
-    if (!node.isGroup && node.resource) {
+    if (node.resource) {
       ids.push(node.resource.id);
     }
     for (const child of node.children) {
-      ids.push(...getSubtreeResourceIds(child));
+      ids.push(...getSubtreeResourceIds(child, visited));
     }
     return ids;
   };
 
+  // Resource ID set for Histogram & S-Curve filtering (null => Whole Project)
+  const selectedResourceIdSet = useMemo<Set<string> | null>(() => {
+    if (isWholeProjectSelected) return null;
+    if (!activeNode) return null;
+    return new Set(getSubtreeResourceIds(activeNode));
+  }, [isWholeProjectSelected, activeNode]);
+
+  const singleLeafResourceId =
+    !isWholeProjectSelected && activeNode && !activeNode.isGroup && activeNode.resource
+      ? activeNode.resource.id
+      : null;
+
   // Assigned activities for the currently selected tree node or flat resource
   const activeActivities = useMemo(() => {
     if (!activeNode) return [];
-    const targetResourceIds = new Set(getSubtreeResourceIds(activeNode));
+    const targetResourceIds = isWholeProjectSelected
+      ? null
+      : new Set(getSubtreeResourceIds(activeNode));
 
     const result: { activity: Activity; assignmentTargetUnits: number; assignmentCost: number }[] = [];
     const seenActs = new Set<string>();
 
     for (const act of project.activities) {
-      const matchedAsgns = act.assignments.filter((a) => targetResourceIds.has(a.resourceId));
+      const matchedAsgns = targetResourceIds
+        ? act.assignments.filter((a) => targetResourceIds.has(a.resourceId))
+        : act.assignments;
       if (matchedAsgns.length > 0 && !seenActs.has(act.id)) {
         seenActs.add(act.id);
         const totalUnits = matchedAsgns.reduce((s, a) => s + (a.targetUnits || 0), 0);
@@ -334,7 +400,7 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
     }
 
     return result;
-  }, [activeNode, project.activities]);
+  }, [activeNode, isWholeProjectSelected, project.activities]);
 
   // Filtered resources for flat view
   const filteredFlatResources = useMemo(() => {
@@ -344,12 +410,6 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
       (r) => r.code.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)
     );
   }, [project.resources, searchQuery]);
-
-  // Overall totals
-  const totalBudgetCost = project.resources.reduce((sum, r) => sum + r.totalCost, 0);
-  const totalLaborHours = project.resources
-    .filter((r) => r.type === 'RT_Labor')
-    .reduce((sum, r) => sum + r.totalAssignedUnits, 0);
 
   // Render a recursive tree item
   const renderTreeNode = (node: ResourceTreeNode) => {
@@ -507,10 +567,10 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
         </div>
       </div>
 
-      {/* Main Split Body: Left Tree/List Panel + Right Detailed Allocation View */}
+      {/* Main Split Body: Left Tree/List Panel + Right Detailed Allocation / Histogram View */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Side: Resource Hierarchy Tree or Flat List */}
-        <div className="w-[390px] lg:w-[460px] shrink-0 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-950">
+        <div className="w-[330px] lg:w-[390px] shrink-0 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-950">
           {/* Search and Action Toolbar */}
           <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center gap-2">
             <div className="relative flex-1">
@@ -540,6 +600,29 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Whole Project Root Row (Always Available) */}
+          <div
+            onClick={() => setSelectedNodeId(ALL_PROJECT_NODE_ID)}
+            className={`px-3 py-2.5 cursor-pointer transition-colors text-xs flex items-center justify-between border-b border-slate-200 dark:border-slate-800 ${
+              isWholeProjectSelected
+                ? 'bg-amber-100 text-amber-950 dark:bg-amber-500/15 dark:text-amber-200 font-semibold'
+                : 'bg-slate-50/70 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900'
+            }`}
+          >
+            <div className="flex items-center gap-2 truncate">
+              <Layers className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="truncate font-semibold">Whole Project (All Resources)</span>
+            </div>
+            <span className="font-mono text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold tabular-nums shrink-0 ml-2">
+              {formatCurrencyAmount(
+                totalBudgetCost,
+                project.metadata.currencySymbol,
+                project.metadata.currencyCode,
+                project.metadata.currencyDecimalDigits
+              )}
+            </span>
           </div>
 
           {/* Tree View Mode */}
@@ -610,9 +693,67 @@ export const ResourceInspector: React.FC<ResourceInspectorProps> = ({
           )}
         </div>
 
-        {/* Right Side: Selected Node / Resource Overview & Assigned Activities Table */}
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-950 p-6 space-y-6">
-          {activeNode ? (
+        {/* Right Side: View Mode Switcher + Histogram/S-Curve or Overview & Assignments */}
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-950 p-6 space-y-5">
+          {/* Right Panel Mode Toggle */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="inline-flex items-center p-0.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setRightPanelMode('histogram')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  rightPanelMode === 'histogram'
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <BarChart3 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                Histogram &amp; S-Curve
+              </button>
+              <button
+                type="button"
+                onClick={() => setRightPanelMode('overview')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  rightPanelMode === 'overview'
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Table2 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                Overview &amp; Assignments ({activeActivities.length})
+              </button>
+            </div>
+
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+              Scope: <strong className="text-slate-800 dark:text-slate-200">{activeNode.code}</strong>
+            </span>
+          </div>
+
+          {rightPanelMode === 'histogram' ? (
+            <ResourceHistogramSCurve
+              project={project}
+              scopeTitle={
+                isWholeProjectSelected
+                  ? `${project.metadata.name} — Whole Project Profile`
+                  : `${activeNode.code} — ${activeNode.name}`
+              }
+              scopeSubtitle={
+                isWholeProjectSelected
+                  ? `All ${project.resources.length} resources`
+                  : activeNode.isGroup
+                  ? `RBS Group · ${activeNode.distinctResourcesCount} resources`
+                  : `${
+                      activeNode.type === 'RT_Labor'
+                        ? 'Labor Resource'
+                        : activeNode.type === 'RT_Mat'
+                        ? 'Material Resource'
+                        : 'Non-Labor / Equipment'
+                    }${activeNode.resource?.maxUnitsPerHour ? ` · Max ${activeNode.resource.maxUnitsPerHour}/hr` : ''}`
+              }
+              selectedResourceIds={selectedResourceIdSet}
+              singleLeafResourceId={singleLeafResourceId}
+            />
+          ) : activeNode ? (
             <>
               {/* Executive Summary Card for Selected Hierarchy Node */}
               <div className="p-5 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl space-y-4 shadow-xs">

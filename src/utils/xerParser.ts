@@ -13,6 +13,7 @@ import {
   RelationshipType,
   Resource,
   ResourceAssignment,
+  ResourceCurve,
   ResourceType,
   WbsNode,
   XerFileHeader,
@@ -438,6 +439,48 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
   }
   updateWbsPaths(rootWbsNodes);
 
+  // 3b. RSRCCURVDATA table (Primavera P6 21-point Resource Curves)
+  const curveTable = tables.get('RSRCCURVDATA');
+  const resourceCurves = new Map<string, ResourceCurve>();
+
+  if (curveTable) {
+    for (const rec of curveTable.records) {
+      const curvId = (rec['curv_id'] || '').trim();
+      if (!curvId) continue;
+      const pctValues: number[] = [];
+      for (let idx = 0; idx <= 20; idx++) {
+        const val = parseFloat(rec[`pct_usage_${idx}`] || '0');
+        pctValues.push(Number.isFinite(val) && val >= 0 ? val : 0);
+      }
+      const sum = pctValues.reduce((s, v) => s + v, 0);
+      if (sum > 0) {
+        resourceCurves.set(curvId, {
+          id: curvId,
+          name: (rec['curv_name'] || `Curve ${curvId}`).trim(),
+          pctValues: pctValues.map((v) => (v / sum) * 100),
+        });
+      }
+    }
+  }
+
+  // 3c. RSRCRATE table (Max Units/Time limits per resource)
+  const rateTable = tables.get('RSRCRATE');
+  const rsrcMaxPerHrMap = new Map<string, number>();
+
+  if (rateTable) {
+    for (const rec of rateTable.records) {
+      const rsrcId = (rec['rsrc_id'] || '').trim();
+      const maxPerHr = parseFloat(rec['max_qty_per_hr'] || '');
+      if (rsrcId && Number.isFinite(maxPerHr) && maxPerHr > 0) {
+        // Keep latest / max defined limit
+        const existing = rsrcMaxPerHrMap.get(rsrcId);
+        if (existing === undefined || maxPerHr > existing) {
+          rsrcMaxPerHrMap.set(rsrcId, maxPerHr);
+        }
+      }
+    }
+  }
+
   // 4. RSRC table (Resources)
   const rsrcTable = tables.get('RSRC');
   const resources: Resource[] = [];
@@ -450,6 +493,9 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
       if (rec['rsrc_type'] === 'RT_Nonlabor') rType = 'RT_Nonlabor';
       else if (rec['rsrc_type'] === 'RT_Mat') rType = 'RT_Mat';
 
+      const defQtyPerHr = parseFloat(rec['def_qty_per_hr'] || '');
+      const maxFromRate = rsrcMaxPerHrMap.get(rsrcId);
+
       const rsrc: Resource = {
         id: rsrcId,
         code: rec['rsrc_short_name'] || rsrcId,
@@ -460,6 +506,8 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
         totalCost: 0,
         assignedActivitiesCount: 0,
         parentId: rec['parent_rsrc_id'] || undefined,
+        maxUnitsPerHour: maxFromRate ?? (Number.isFinite(defQtyPerHr) && defQtyPerHr > 0 ? defQtyPerHr : undefined),
+        defaultUnitsPerHour: Number.isFinite(defQtyPerHr) && defQtyPerHr > 0 ? defQtyPerHr : undefined,
       };
       resources.push(rsrc);
       rsrcMap.set(rsrcId, rsrc);
@@ -477,9 +525,31 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
       const rsrc = rsrcMap.get(rsrcId);
 
       const targetUnits = parseFloat(rec['target_qty'] || '0') || 0;
-      const actUnits = parseFloat(rec['act_qty'] || '0') || 0;
+      const actRegQty = parseFloat(rec['act_reg_qty'] || '');
+      const actOtQty = parseFloat(rec['act_ot_qty'] || '');
+      const actUnits =
+        Number.isFinite(actRegQty) || Number.isFinite(actOtQty)
+          ? (Number.isFinite(actRegQty) ? actRegQty : 0) + (Number.isFinite(actOtQty) ? actOtQty : 0)
+          : parseFloat(rec['act_qty'] || '0') || 0;
+      const parsedRemainUnits = parseFloat(rec['remain_qty'] || '');
+      const remainUnits = Number.isFinite(parsedRemainUnits)
+        ? Math.max(0, parsedRemainUnits)
+        : Math.max(0, targetUnits - actUnits);
+
       const targetCost = parseFloat(rec['target_cost'] || '0') || 0;
-      const actCost = parseFloat(rec['act_cost'] || '0') || 0;
+      const actRegCost = parseFloat(rec['act_reg_cost'] || '');
+      const actOtCost = parseFloat(rec['act_ot_cost'] || '');
+      const actCost =
+        Number.isFinite(actRegCost) || Number.isFinite(actOtCost)
+          ? (Number.isFinite(actRegCost) ? actRegCost : 0) + (Number.isFinite(actOtCost) ? actOtCost : 0)
+          : parseFloat(rec['act_cost'] || '0') || 0;
+      const parsedRemainCost = parseFloat(rec['remain_cost'] || '');
+      const remainCost = Number.isFinite(parsedRemainCost)
+        ? Math.max(0, parsedRemainCost)
+        : Math.max(0, targetCost - actCost);
+
+      const curveId = (rec['curv_id'] || '').trim() || undefined;
+      const curveObj = curveId ? resourceCurves.get(curveId) : undefined;
 
       const assignment: ResourceAssignment = {
         id: rec['task_rsrc_id'] || `${taskId}_${rsrcId}`,
@@ -490,8 +560,18 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
         resourceType: rsrc ? rsrc.type : 'RT_Labor',
         targetUnits,
         actUnits,
+        remainUnits,
         targetCost,
         actCost,
+        remainCost,
+        targetStartDate: normalizeDate(rec['target_start_date']),
+        targetEndDate: normalizeDate(rec['target_end_date']),
+        actualStartDate: normalizeDate(rec['act_start_date']),
+        actualEndDate: normalizeDate(rec['act_end_date']),
+        remainStartDate: normalizeDate(rec['restart_date']),
+        remainEndDate: normalizeDate(rec['reend_date']),
+        curveId,
+        curveName: curveObj?.name,
       };
 
       if (!activityAssignmentsMap.has(taskId)) {
@@ -845,6 +925,7 @@ export function parseXerProject(content: string, fileName = 'project.xer'): Pars
     wbsHierarchy: rootWbsNodes,
     wbsMap,
     resources,
+    resourceCurves,
     calendars,
     relationships: allRelationships,
     longestPaths,
@@ -1287,12 +1368,14 @@ export function exportProjectToXer(project: ParsedProject): string {
 
   // TASKRSRC table
   lines.push('%T\tTASKRSRC');
-  lines.push('%F\ttask_rsrc_id\ttask_id\trsrc_id\ttarget_qty\tact_qty\ttarget_cost\tact_cost');
+  lines.push(
+    '%F\ttask_rsrc_id\ttask_id\trsrc_id\ttarget_qty\tact_qty\tremain_qty\ttarget_cost\tact_cost\tremain_cost\ttarget_start_date\ttarget_end_date\tact_start_date\tact_end_date\trestart_date\treend_date\tcurv_id'
+  );
   let assignCounter = 1;
   for (const a of project.activities) {
     for (const assign of a.assignments) {
       lines.push(
-        `%R\t${assign.id || assignCounter++}\t${assign.taskId}\t${assign.resourceId}\t${assign.targetUnits}\t${assign.actUnits}\t${assign.targetCost}\t${assign.actCost}`
+        `%R\t${assign.id || assignCounter++}\t${assign.taskId}\t${assign.resourceId}\t${assign.targetUnits}\t${assign.actUnits}\t${assign.remainUnits}\t${assign.targetCost}\t${assign.actCost}\t${assign.remainCost}\t${assign.targetStartDate || ''}\t${assign.targetEndDate || ''}\t${assign.actualStartDate || ''}\t${assign.actualEndDate || ''}\t${assign.remainStartDate || ''}\t${assign.remainEndDate || ''}\t${assign.curveId || ''}`
       );
     }
   }
